@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Lei Shi, Matthew Secrest" />
+
+<meta name="date" content="2026-08-20" />
+
+<title>Simulation Workflow for OLE Phase</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Simulation Workflow for OLE Phase</h1>
+<h4 class="author">Lei Shi, Matthew Secrest</h4>
+<h4 class="date">2026-08-20</h4>
+
+
+
+<div id="ole-study" class="section level2">
+<h2>OLE study</h2>
+<p>This vignette demonstrates Monte Carlo simulation for evaluating the
+difference-in-differences (DID) estimators proposed in <a href="https://doi.org/10.1080/10543406.2024.2444222">Zhou et
+al. (2024)</a> for the open-label extension (OLE) phase.</p>
+<p>The simulated data has four outcome columns (<code>y1</code>,
+<code>y2</code>, <code>y3</code>, <code>y4</code>) and a crossover point
+<code>T_cross = 2</code>. This means:</p>
+<ul>
+<li><strong><code>y1</code>, <code>y2</code></strong> (columns 1 to
+<code>T_cross</code>): placebo-controlled phase (Period I). Both RCT
+controls and external controls are untreated. These outcomes serve as
+negative controls for bias correction.</li>
+<li><strong><code>y3</code>, <code>y4</code></strong> (columns
+<code>T_cross + 1</code> to end): open-label extension phase (Period
+II). RCT controls have switched to treatment; external controls remain
+untreated. Treatment effects are estimated here.</li>
+</ul>
+<p>In other words, <code>T_cross</code> is the last index of the
+placebo-controlled phase in <code>outcome_col_name</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">head</span>(SyntheticData)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#&gt;   x1 x2 x3 x4       x5 A S T_cross         y1         y2         y3        y4</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; 1  1  1  1  9 54.59836 1 1       2  3.4512377 -0.7642287 -2.4713591  3.935466</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; 2  0  1  0  8 33.08006 1 1       2  0.4518106  6.3516296  4.5231869 -0.198674</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; 3  1  1  1  7 48.51653 0 1       2  3.0532714 -2.0453190  5.9064870 -1.374919</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; 4  1  1  1 15 31.68766 1 1       2 -9.1183948  0.2304339  4.7858172  8.490757</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; 5  1  1  1 12 29.98495 0 1       2 -1.4270057  1.5878794  3.7006101  9.449632</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; 6  1  1  0  7 46.08991 0 1       2 -2.6967072 -0.6130288  0.7482786 -2.413717</span></span></code></pre></div>
+<div id="simulate-a-dataset-for-ole-study" class="section level3">
+<h3>1. Simulate a dataset for OLE study</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Initialize an empty data list</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2023</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>data_matrix_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># a small ntrial keeps this vignette fast to build; use hundreds to</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># thousands of trials for stable operating characteristic estimates</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>ntrial <span class="ot">&lt;-</span> <span class="dv">20</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># Specify the significance level alpha</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co"># Specify the true effect size at the end of the OLE study</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>true_effect_long <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co"># Specify column names</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>covariates_col_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>, <span class="st">&quot;x3&quot;</span>, <span class="st">&quot;x4&quot;</span>, <span class="st">&quot;x5&quot;</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>outcome_col_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;y1&quot;</span>, <span class="st">&quot;y2&quot;</span>, <span class="st">&quot;y3&quot;</span>, <span class="st">&quot;y4&quot;</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>treatment_col_name <span class="ot">&lt;-</span> <span class="st">&quot;A&quot;</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>trial_status_col_name <span class="ot">&lt;-</span> <span class="st">&quot;S&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Sequentially adding in datasets</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="cf">for</span> (trial_iter <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>ntrial) {</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="co"># simulate 300 sample</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  normal <span class="ot">&lt;-</span> copula<span class="sc">::</span><span class="fu">normalCopula</span>(<span class="at">param =</span> <span class="fu">c</span>(<span class="fl">0.8</span>), <span class="at">dim =</span> <span class="dv">4</span>, <span class="at">dispstr =</span> <span class="st">&quot;ar1&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="co"># ========== generate internal covariates =============</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  X_int <span class="ot">&lt;-</span> <span class="fu">simulate_X_copula</span>(</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    <span class="at">n =</span> <span class="dv">200</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>    <span class="at">p =</span> <span class="dv">4</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>    <span class="at">cp =</span> normal, <span class="co"># copula</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>    <span class="at">margins =</span> <span class="fu">c</span>(<span class="st">&quot;binom&quot;</span>, <span class="st">&quot;binom&quot;</span>, <span class="st">&quot;binom&quot;</span>, <span class="st">&quot;exp&quot;</span>), <span class="co"># specify marginal distributions</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>    <span class="at">paramMargins =</span> <span class="fu">list</span>(</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="fl">0.7</span>), <span class="co"># specify parameters for marginals</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="fl">0.9</span>),</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="fl">0.3</span>),</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">rate =</span> <span class="dv">1</span> <span class="sc">/</span> <span class="dv">10</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>    )</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>  )</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>  X_int<span class="sc">$</span>x4 <span class="ot">&lt;-</span> <span class="fu">round</span>(X_int<span class="sc">$</span>x4) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>  X_int<span class="sc">$</span>x5 <span class="ot">&lt;-</span> <span class="dv">30</span> <span class="sc">+</span> <span class="dv">10</span> <span class="sc">*</span> X_int<span class="sc">$</span>x1 <span class="sc">+</span> (<span class="dv">7</span>) <span class="sc">*</span> X_int<span class="sc">$</span>x2 <span class="sc">+</span> (<span class="sc">-</span><span class="dv">6</span>) <span class="sc">*</span> X_int<span class="sc">$</span>x3 <span class="sc">+</span> (<span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">*</span> X_int<span class="sc">$</span>x4 <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">200</span>, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="dv">10</span>)</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>  varnames <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;1&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;x&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>))</span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>  <span class="co"># ============ generate external covariates ==============</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>  X_ext <span class="ot">&lt;-</span> <span class="fu">simulate_X_copula</span>(</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>    <span class="at">n =</span> <span class="dv">100</span>,</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>    <span class="at">p =</span> <span class="dv">4</span>,</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>    <span class="at">cp =</span> normal, <span class="co"># copula</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>    <span class="at">margins =</span> <span class="fu">c</span>(<span class="st">&quot;binom&quot;</span>, <span class="st">&quot;binom&quot;</span>, <span class="st">&quot;binom&quot;</span>, <span class="st">&quot;exp&quot;</span>), <span class="co"># specify marginal distributions</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>    <span class="at">paramMargins =</span> <span class="fu">list</span>(</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="fl">0.7</span>), <span class="co"># specify parameters for marginals</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="fl">0.9</span>),</span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="fl">0.3</span>),</span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">rate =</span> <span class="dv">1</span> <span class="sc">/</span> <span class="dv">10</span>)</span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a>    )</span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a>  )</span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a>  X_ext<span class="sc">$</span>x4 <span class="ot">&lt;-</span> <span class="fu">round</span>(X_ext<span class="sc">$</span>x4) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a>  X_ext<span class="sc">$</span>x5 <span class="ot">&lt;-</span> <span class="dv">50</span> <span class="sc">+</span> <span class="dv">10</span> <span class="sc">*</span> X_ext<span class="sc">$</span>x1 <span class="sc">+</span> (<span class="dv">2</span>) <span class="sc">*</span> X_ext<span class="sc">$</span>x2 <span class="sc">+</span> (<span class="sc">-</span><span class="dv">1</span>) <span class="sc">*</span> X_ext<span class="sc">$</span>x3 <span class="sc">+</span> (<span class="sc">-</span><span class="fl">0.3</span>) <span class="sc">*</span> X_ext<span class="sc">$</span>x4 <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="dv">10</span>)</span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a></span>
+<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a>  varnames <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;1&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;x&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>))</span>
+<span id="cb3-43"><a href="#cb3-43" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" tabindex="-1"></a>  <span class="co"># ============ Specify outcome models ==============</span></span>
+<span id="cb3-45"><a href="#cb3-45" tabindex="-1"></a>  model_form_x_t1 <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">c</span>(<span class="fl">10.0</span>, <span class="fl">0.05</span>, <span class="sc">-</span><span class="fl">1.5</span>, <span class="sc">-</span><span class="fl">1.0</span>, <span class="sc">-</span><span class="fl">0.2</span>, <span class="sc">-</span><span class="fl">0.1</span>), varnames) <span class="co"># 1.5*A, sigma = 4.0</span></span>
+<span id="cb3-46"><a href="#cb3-46" tabindex="-1"></a>  model_form_x_t2 <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">c</span>(<span class="fl">6.0</span>, <span class="fl">0.5</span>, <span class="sc">-</span><span class="fl">0.5</span>, <span class="sc">-</span><span class="fl">1.0</span>, <span class="sc">-</span><span class="fl">0.3</span>, <span class="sc">-</span><span class="fl">0.06</span>), varnames) <span class="co"># 1.8*A, sigma = 4.0</span></span>
+<span id="cb3-47"><a href="#cb3-47" tabindex="-1"></a>  model_form_x_t3 <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">c</span>(<span class="fl">5.0</span>, <span class="fl">1.9</span>, <span class="fl">1.4</span>, <span class="sc">-</span><span class="fl">1.3</span>, <span class="sc">-</span><span class="fl">0.4</span>, <span class="sc">-</span><span class="fl">0.15</span>), varnames) <span class="co"># 1.6*A, sigma = 4.0</span></span>
+<span id="cb3-48"><a href="#cb3-48" tabindex="-1"></a>  model_form_x_t4 <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">c</span>(<span class="fl">1.2</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="sc">-</span><span class="fl">0.5</span>, <span class="sc">-</span><span class="fl">0.4</span>, <span class="sc">-</span><span class="fl">0.10</span>), varnames) <span class="co"># 2.5*A, sigma = 5.0</span></span>
+<span id="cb3-49"><a href="#cb3-49" tabindex="-1"></a></span>
+<span id="cb3-50"><a href="#cb3-50" tabindex="-1"></a>  outcome_model_specs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb3-51"><a href="#cb3-51" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb3-52"><a href="#cb3-52" tabindex="-1"></a>      <span class="at">effect =</span> <span class="dv">0</span>, <span class="at">model_form_x =</span> model_form_x_t1, <span class="co"># from data: true_effect = 1.5</span></span>
+<span id="cb3-53"><a href="#cb3-53" tabindex="-1"></a>      <span class="at">noise_mean =</span> <span class="dv">0</span>, <span class="at">noise_sd =</span> <span class="dv">4</span></span>
+<span id="cb3-54"><a href="#cb3-54" tabindex="-1"></a>    ), <span class="co"># model form for the first time point, given by model_form_x_t1</span></span>
+<span id="cb3-55"><a href="#cb3-55" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb3-56"><a href="#cb3-56" tabindex="-1"></a>      <span class="at">effect =</span> <span class="dv">0</span>, <span class="at">model_form_x =</span> model_form_x_t2, <span class="co"># from data: true_effect = 1.8</span></span>
+<span id="cb3-57"><a href="#cb3-57" tabindex="-1"></a>      <span class="at">noise_mean =</span> <span class="dv">0</span>, <span class="at">noise_sd =</span> <span class="dv">4</span></span>
+<span id="cb3-58"><a href="#cb3-58" tabindex="-1"></a>    ), <span class="co"># model form for the second time point, given by model_form_x_t2</span></span>
+<span id="cb3-59"><a href="#cb3-59" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb3-60"><a href="#cb3-60" tabindex="-1"></a>      <span class="at">effect =</span> <span class="dv">0</span>, <span class="at">model_form_x =</span> model_form_x_t3, <span class="co"># from data: true_effect = 1.6</span></span>
+<span id="cb3-61"><a href="#cb3-61" tabindex="-1"></a>      <span class="at">noise_mean =</span> <span class="dv">0</span>, <span class="at">noise_sd =</span> <span class="dv">4</span></span>
+<span id="cb3-62"><a href="#cb3-62" tabindex="-1"></a>    ), <span class="co"># model form for the third time point, given by model_form_x_t3</span></span>
+<span id="cb3-63"><a href="#cb3-63" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb3-64"><a href="#cb3-64" tabindex="-1"></a>      <span class="at">effect =</span> true_effect_long, <span class="at">model_form_x =</span> model_form_x_t4, <span class="co"># from data: true_effect = 2.5</span></span>
+<span id="cb3-65"><a href="#cb3-65" tabindex="-1"></a>      <span class="at">noise_mean =</span> <span class="dv">0</span>, <span class="at">noise_sd =</span> <span class="dv">4</span></span>
+<span id="cb3-66"><a href="#cb3-66" tabindex="-1"></a>    ) <span class="co"># model form for the fourth time point, given by model_form_x_t4</span></span>
+<span id="cb3-67"><a href="#cb3-67" tabindex="-1"></a>  )</span>
+<span id="cb3-68"><a href="#cb3-68" tabindex="-1"></a></span>
+<span id="cb3-69"><a href="#cb3-69" tabindex="-1"></a>  <span class="co"># =========== generate trial data ============</span></span>
+<span id="cb3-70"><a href="#cb3-70" tabindex="-1"></a>  Data <span class="ot">&lt;-</span> <span class="fu">simulate_trial</span>(X_int,</span>
+<span id="cb3-71"><a href="#cb3-71" tabindex="-1"></a>    X_ext,</span>
+<span id="cb3-72"><a href="#cb3-72" tabindex="-1"></a>    <span class="at">num_treated =</span> <span class="dv">150</span>,</span>
+<span id="cb3-73"><a href="#cb3-73" tabindex="-1"></a>    <span class="at">OLE_flag =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-74"><a href="#cb3-74" tabindex="-1"></a>    <span class="at">T_cross =</span> <span class="dv">2</span>,</span>
+<span id="cb3-75"><a href="#cb3-75" tabindex="-1"></a>    outcome_model_specs</span>
+<span id="cb3-76"><a href="#cb3-76" tabindex="-1"></a>  )</span>
+<span id="cb3-77"><a href="#cb3-77" tabindex="-1"></a></span>
+<span id="cb3-78"><a href="#cb3-78" tabindex="-1"></a></span>
+<span id="cb3-79"><a href="#cb3-79" tabindex="-1"></a>  data_matrix_list[[trial_iter]] <span class="ot">&lt;-</span> Data</span>
+<span id="cb3-80"><a href="#cb3-80" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="bootstrap-inference" class="section level3">
+<h3>2 Bootstrap inference</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>model_form_mu <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="st">&quot;y1 ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="st">&quot;y2 ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="st">&quot;y3 ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="st">&quot;y4 ~ x1 + x2 + x3 + x4 + x5&quot;</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>method_IPW_DID <span class="ot">&lt;-</span> <span class="fu">did_ec_ipw</span>(</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">ps_formula =</span> <span class="st">&quot;S ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">trt_formula =</span> <span class="st">&quot;A ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">bootstrap =</span> <span class="dv">50</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">bootstrap_ci_type =</span> <span class="st">&quot;perc&quot;</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>)</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>method_AIPW_DID <span class="ot">&lt;-</span> <span class="fu">did_ec_aipw</span>(</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>  <span class="at">ps_formula =</span> <span class="st">&quot;S ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>  <span class="at">trt_formula =</span> <span class="st">&quot;A ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>  <span class="at">outcome_formula =</span> model_form_mu,</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>  <span class="at">bootstrap =</span> <span class="dv">50</span>,</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>  <span class="at">bootstrap_ci_type =</span> <span class="st">&quot;perc&quot;</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>)</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>method_OR_DID <span class="ot">&lt;-</span> <span class="fu">did_ec_or</span>(</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>  <span class="at">outcome_formula_ext =</span> model_form_mu,</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>  <span class="at">outcome_formula_rct_ctrl =</span> model_form_mu,</span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a>  <span class="at">outcome_formula_rct_trt =</span> model_form_mu,</span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>  <span class="at">bootstrap =</span> <span class="dv">50</span>,</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>  <span class="at">bootstrap_ci_type =</span> <span class="st">&quot;perc&quot;</span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a>)</span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>method_obj_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a>  method_IPW_DID,</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a>  method_AIPW_DID,</span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a>  method_OR_DID</span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># create a simulation object for primary analysis</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>simulation_OLE_obj <span class="ot">&lt;-</span> <span class="fu">setup_simulation_OLE</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">data_matrix_list =</span> data_matrix_list, <span class="co"># two scenarios</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">trial_status_col_name =</span> trial_status_col_name,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">treatment_col_name =</span> treatment_col_name,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">outcome_col_name =</span> outcome_col_name,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">covariates_col_name =</span> covariates_col_name,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">method_obj_list =</span> method_obj_list,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">true_effect =</span> true_effect_long,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">T_cross =</span> <span class="dv">2</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="at">alpha =</span> alpha,</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="at">method_description =</span> <span class="fu">c</span>(</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    <span class="st">&quot;IPW, DID&quot;</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    <span class="st">&quot;AIPW, DID&quot;</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>    <span class="st">&quot;OR, DID&quot;</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  )</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>simulation_report <span class="ot">&lt;-</span> <span class="fu">run_simulation</span>(simulation_OLE_obj, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>simulation_report</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt;   method_description        bias variance       mse coverage type_I_error</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; 1           IPW, DID -0.28180693 3.881071 3.9604863     0.90         0.10</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; 2          AIPW, DID  0.23441801 3.885825 3.9407764     0.95         0.05</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; 3            OR, DID  0.05582604 0.609393 0.6125095     1.00         0.00</span></span></code></pre></div>
+</div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li>Zhou X, Pang H, Drake C, Burger HU, Zhu J (2024). “Estimating
+treatment effect in randomized trial after control to treatment
+crossover using external controls.” <em>Journal of Biopharmaceutical
+Statistics</em>. doi: <a href="https://doi.org/10.1080/10543406.2024.2444222">10.1080/10543406.2024.2444222</a>.</li>
+<li>Shi L, Pang H, Chen C, Zhu J (2025). “rdborrow: an R package for
+causal inference incorporating external controls in randomized
+controlled trials with longitudinal outcomes.” <em>Journal of
+Biopharmaceutical Statistics</em>, 35(6), 1043-1066. doi: <a href="https://doi.org/10.1080/10543406.2025.2489283">10.1080/10543406.2025.2489283</a>.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Matthew Secrest" />
+
+<meta name="date" content="2026-08-20" />
+
+<title>Introduction to rdborrow</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to rdborrow</h1>
+<h4 class="author">Matthew Secrest</h4>
+<h4 class="date">2026-08-20</h4>
+
+
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p><strong>rdborrow</strong> implements causal inference methods for
+incorporating external controls in randomized controlled trials (RCTs)
+with longitudinal outcomes. The package provides tools for both analysis
+and simulation, enabling researchers to evaluate different borrowing
+strategies and design trials that leverage external data.</p>
+<p>The methods are motivated by the SUNFISH trial for spinal muscular
+atrophy (SMA), where external controls from the olesoxime trial augment
+the randomized data to improve statistical efficiency.</p>
+</div>
+<div id="methods" class="section level2">
+<h2>Methods</h2>
+<div id="primary-analysis-placebo-controlled-phase" class="section level3">
+<h3>Primary analysis (placebo-controlled phase)</h3>
+<p>These methods estimate the average treatment effect (ATE) during the
+placebo-controlled phase by borrowing from external controls.</p>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="23%" />
+<col width="26%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Function</th>
+<th>Reference</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>EC-IPW</td>
+<td><code>ec_ipw()</code></td>
+<td>Zhou et al. (2024b)</td>
+<td>Inverse probability weighting with external control borrowing</td>
+</tr>
+<tr class="even">
+<td>EC-AIPW</td>
+<td><code>ec_aipw()</code></td>
+<td>Zhou et al. (2024b)</td>
+<td>Augmented IPW (doubly robust)</td>
+</tr>
+</tbody>
+</table>
+<p>Both methods support:</p>
+<ul>
+<li><strong>No borrowing</strong> (<code>weight = 0</code>): uses only
+RCT data</li>
+<li><strong>Optimal weight</strong> (<code>weight = NULL</code>):
+data-adaptive weight minimizing variance</li>
+<li><strong>Fixed weight</strong> (<code>weight = 0.3</code>):
+user-specified borrowing amount</li>
+<li><strong>Sandwich variance</strong> or <strong>bootstrap
+inference</strong></li>
+</ul>
+<p>See <code>vignette(&quot;primary_analysis_workflow&quot;)</code> for usage.</p>
+</div>
+<div id="ole-phase-analysis-open-label-extension" class="section level3">
+<h3>OLE phase analysis (open-label extension)</h3>
+<p>After the placebo-controlled phase, control subjects cross over to
+treatment. These methods estimate the long-term treatment effect using
+external controls who remain untreated.</p>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="23%" />
+<col width="26%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Function</th>
+<th>Reference</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>DID-EC-IPW</td>
+<td><code>did_ec_ipw()</code></td>
+<td>Zhou et al. (2024a)</td>
+<td>Difference-in-differences with IPW</td>
+</tr>
+<tr class="even">
+<td>DID-EC-AIPW</td>
+<td><code>did_ec_aipw()</code></td>
+<td>Zhou et al. (2024a)</td>
+<td>DID with augmented IPW</td>
+</tr>
+<tr class="odd">
+<td>DID-EC-OR</td>
+<td><code>did_ec_or()</code></td>
+<td>Zhou et al. (2024a)</td>
+<td>DID with outcome regression</td>
+</tr>
+<tr class="even">
+<td>SCM</td>
+<td><code>scm()</code></td>
+<td>Zhou et al. (2024a)</td>
+<td>Synthetic control method</td>
+</tr>
+</tbody>
+</table>
+<p>All OLE methods use bootstrap for inference.</p>
+<p>See <code>vignette(&quot;OLE_analysis_workflow&quot;)</code> for usage.</p>
+</div>
+<div id="simulation" class="section level3">
+<h3>Simulation</h3>
+<p>The simulation module evaluates estimator performance via Monte
+Carlo:</p>
+<ul>
+<li><code>simulate_trial()</code> generates synthetic trial + external
+control data</li>
+<li><code>setup_simulation_primary()</code> /
+<code>setup_simulation_OLE()</code> configure simulations</li>
+<li><code>run_simulation()</code> runs Monte Carlo experiments and
+reports bias, variance, MSE, coverage, power</li>
+</ul>
+<p>See <code>vignette(&quot;primary_simulation_workflow&quot;)</code> and
+<code>vignette(&quot;OLE_simulation_workflow&quot;)</code> for usage.</p>
+</div>
+</div>
+<div id="getting-help" class="section level2">
+<h2>Getting help</h2>
+<p>The help pages for <code>run_analysis()</code> and
+<code>run_simulation()</code> list all available methods and link to
+their documentation:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>?run_analysis</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>?run_simulation</span></code></pre></div>
+</div>
+<div id="quick-start" class="section level2">
+<h2>Quick start</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># create an EC-IPW method with optimal borrowing weight</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>method <span class="ot">&lt;-</span> <span class="fu">ec_ipw</span>(<span class="at">ps_formula =</span> <span class="st">&quot;S ~ x1 + x2 + x3 + x4 + x5&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># set up the analysis</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>analysis <span class="ot">&lt;-</span> <span class="fu">setup_analysis_primary</span>(</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">data =</span> SyntheticData,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">trial_status_col_name =</span> <span class="st">&quot;S&quot;</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">treatment_col_name =</span> <span class="st">&quot;A&quot;</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">outcome_col_name =</span> <span class="fu">c</span>(<span class="st">&quot;y1&quot;</span>, <span class="st">&quot;y2&quot;</span>),</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">covariates_col_name =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>, <span class="st">&quot;x3&quot;</span>, <span class="st">&quot;x4&quot;</span>, <span class="st">&quot;x5&quot;</span>),</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">method_weighting_obj =</span> method</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co"># run</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">run_analysis</span>(analysis)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>results</span></code></pre></div>
+<pre><code>## $results
+##      point_estimates standard_deviation lower_CI_normal upper_CI_normal
+## tau1      -0.1971969          0.5134018       -1.203446        0.809052
+## tau2       0.4697209          0.5410007       -0.590621        1.530063
+## 
+## $borrow_weight
+## [1] 0.1475196</code></pre>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li>Zhou X, Zhu J, Drake C, Pang H (2024). “Causal estimators for
+incorporating external controls in randomized trials with longitudinal
+outcomes.” <em>Journal of the Royal Statistical Society Series A:
+Statistics in Society</em>. doi: <a href="https://doi.org/10.1093/jrsssa/qnae075">10.1093/jrsssa/qnae075</a>.</li>
+<li>Zhou X, Pang H, Drake C, Burger HU, Zhu J (2024). “Estimating
+treatment effect in randomized trial after control to treatment
+crossover using external controls.” <em>Journal of Biopharmaceutical
+Statistics</em>. doi: <a href="https://doi.org/10.1080/10543406.2024.2444222">10.1080/10543406.2024.2444222</a>.</li>
+<li>Shi L, Pang H, Chen C, Zhu J (2025). “rdborrow: an R package for
+causal inference incorporating external controls in randomized
+controlled trials with longitudinal outcomes.” <em>Journal of
+Biopharmaceutical Statistics</em>, 35(6), 1043-1066. doi: <a href="https://doi.org/10.1080/10543406.2025.2489283">10.1080/10543406.2025.2489283</a>.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
