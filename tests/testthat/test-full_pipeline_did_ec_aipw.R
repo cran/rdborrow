@@ -34,3 +34,47 @@ test_that("DID-EC-AIPW point estimates and bootstrap CIs", {
   expect_equal(res$upper_CI_boot[1], 4.0728301930, tolerance = tol)
   expect_equal(res$upper_CI_boot[2], 8.6316113430, tolerance = tol)
 })
+
+test_that("DID-EC-AIPW marginal treatment model (default trt_formula)", {
+  method <- did_ec_aipw(
+    ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
+    outcome_formula = c(
+      "y1 ~ x1 + x2 + x3 + x4 + x5",
+      "y2 ~ x1 + x2 + x3 + x4 + x5",
+      "y3 ~ x1 + x2 + x3 + x4 + x5",
+      "y4 ~ x1 + x2 + x3 + x4 + x5"
+    ),
+    bootstrap = 50
+  )
+  analysis <- setup_analysis_OLE(
+    data = SyntheticData,
+    trial_status_col_name = "S",
+    treatment_col_name = "A",
+    outcome_col_name = c("y1", "y2", "y3", "y4"),
+    covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
+    T_cross = 2,
+    method_OLE_obj = method
+  )
+
+  set.seed(42)
+  res <- run_analysis(analysis)
+
+  expect_equal(res$point_estimates[1], 2.1300056113, tolerance = tol)
+  expect_equal(res$point_estimates[2], 4.1801074621, tolerance = tol)
+  expect_equal(res$lower_CI_boot[1], -0.0907920052, tolerance = tol)
+  expect_equal(res$upper_CI_boot[2], 8.7190608715, tolerance = tol)
+})
+
+test_that("DID-EC-AIPW marginal model matches an intercept-only treatment model", {
+  covs <- c("x1", "x2", "x3", "x4", "x5")
+  outcomes <- c("y1", "y2", "y3", "y4")
+  df <- .build_analysis_df(SyntheticData, outcomes, "A", "S", covs)
+  Y <- as.matrix(df[, outcomes, drop = FALSE])
+  ps <- "S ~ x1 + x2 + x3 + x4 + x5"
+  of <- paste0(outcomes, " ~ x1 + x2 + x3 + x4 + x5")
+
+  marginal <- .did_ec_aipw_core(df, Y, df$S, df$A, 2, ps, NULL, of)$tau
+  intercept <- .did_ec_aipw_core(df, Y, df$S, df$A, 2, ps, "A ~ 1", of)$tau
+
+  expect_equal(marginal, intercept, tolerance = 0)
+})

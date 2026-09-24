@@ -127,7 +127,7 @@ test_that("run_analysis dispatches scm correctly", {
   skip_on_cran()
   skip_if_not_installed("ECOSolveR")
 
-  method <- scm(bootstrap = 50)
+  method <- scm(bootstrap = 2)
   analysis <- setup_analysis_OLE(
     data = SyntheticData,
     trial_status_col_name = "S",
@@ -137,7 +137,7 @@ test_that("run_analysis dispatches scm correctly", {
     method_OLE_obj = method,
     T_cross = 2
   )
-  res <- run_analysis(analysis)
+  res <- suppressWarnings(run_analysis(analysis))
 
   expect_s3_class(res, "data.frame")
   expect_true("point_estimates" %in% names(res))

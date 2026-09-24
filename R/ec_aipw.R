@@ -90,7 +90,7 @@ ec_aipw <- function(ps_formula,
   }
   if (!is.null(bootstrap_ci_type)) {
     checkmate::assert_choice(
-      bootstrap_ci_type, c("perc", "bca", "norm", "basic", "stud")
+      bootstrap_ci_type, c("perc", "bca", "norm", "basic")
     )
   }
 
@@ -149,7 +149,7 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
       n_estimates = n_time, bootstrap = method@bootstrap,
       bootstrap_ci_type = method@bootstrap_ci_type, alpha = alpha,
       borrow_wt = borrow_weight, outcomes = outcomes,
-      covariates = covariates, ps_formula = ps_formula,
+      ps_formula = ps_formula,
       outcome_formula = method@outcome_formula
     )
     results <- data.frame(
@@ -186,15 +186,16 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
   pi_S <- n / N
   n_time <- ncol(Y)
 
-  # propensity score model
-  ps_model <- glm(as.formula(ps_formula), data = df, family = "binomial")
-  pi_SX <- predict(ps_model, newdata = df, type = "response")
+  # propensity score model and density ratio weights
+  wts <- .ec_weights(df, ps_formula, S)
+  ps_model <- wts$ps_model
+  pi_SX <- wts$pi_SX
+  w00 <- wts$w00
   pi_A <- sum(A[S == 1]) / n
 
   # weights
   w11 <- 1 / pi_A
   w10 <- 1 / (1 - pi_A)
-  w00 <- (pi_SX / (1 - pi_SX)) * ((1 - pi_S) / pi_S) # density ratio
 
   # outcome regression on controls, predict for all subjects
   Y0_models <- lapply(outcome_formula, \(f) {
@@ -264,7 +265,7 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
     rep(-mean((1 - S) * core$w00 / (1 - core$pi_S)), n_time),
     nrow = n_time
   )
-  A34 <- t((1 - S) * core$pi_SX / (core$pi_S * (1 - core$pi_SX)) *
+  A34 <- t((1 - S) * core$w00 / (1 - core$pi_S) *
     sweep(core$Yr, 2, core$mu00)) %*% X_ps / N
   A44 <- t(X_ps) %*% diag(-core$pi_SX * (1 - core$pi_SX)) %*% X_ps / N
 
@@ -336,13 +337,12 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
 #' @param data internal data frame.
 #' @param indices bootstrap sample indices.
 #' @param outcomes outcome column names.
-#' @param covariates covariate column names.
 #' @param ps_formula propensity score formula.
 #' @param outcome_formula outcome model formulas.
 #' @param borrow_wt pre-computed borrowing weight.
 #' @return numeric vector of tau estimates.
 #' @noRd
-.ec_aipw_boot_statistic <- function(data, indices, outcomes, covariates,
+.ec_aipw_boot_statistic <- function(data, indices, outcomes,
                                     ps_formula, outcome_formula, borrow_wt) {
   d <- data[indices, , drop = FALSE]
   core <- .ec_aipw_core(d, outcomes, ps_formula, outcome_formula, borrow_wt)

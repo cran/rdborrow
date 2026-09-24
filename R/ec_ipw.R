@@ -31,8 +31,7 @@ NULL
 #'   (default) for sandwich variance with normal CIs.
 #' @param bootstrap_ci_type Bootstrap CI type, or \code{NULL} (default)
 #'   which resolves to \code{"perc"} when \code{bootstrap} is set. One of
-#'   \code{"perc"}, \code{"bca"}, \code{"norm"}, \code{"basic"}, or
-#'   \code{"stud"}.
+#'   \code{"perc"}, \code{"bca"}, \code{"norm"}, or \code{"basic"}.
 #'
 #' @return An S4 object of class \code{ec_ipw_method}.
 #'
@@ -76,7 +75,7 @@ ec_ipw <- function(ps_formula,
   }
   if (!is.null(bootstrap_ci_type)) {
     checkmate::assert_choice(
-      bootstrap_ci_type, c("perc", "bca", "norm", "basic", "stud")
+      bootstrap_ci_type, c("perc", "bca", "norm", "basic")
     )
   }
 
@@ -128,7 +127,7 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
       n_estimates = n_time, bootstrap = method@bootstrap,
       bootstrap_ci_type = method@bootstrap_ci_type, alpha = alpha,
       borrow_wt = borrow_weight, outcomes = outcomes,
-      covariates = covariates, ps_formula = ps_formula
+      ps_formula = ps_formula
     )
     results <- data.frame(
       point_estimates = tau,
@@ -158,7 +157,6 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
   # see Zhou 2024a: Def 1 (Eq 6) for point estimate, Eq 11 for optimal weight
 
   n <- sum(S)
-  N <- length(S)
   pi_A <- sum(A[S == 1]) / n
 
   mu1 <- colMeans(Y[S == 1 & A == 1, , drop = FALSE])
@@ -173,14 +171,11 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
     ))
   }
 
-  pi_S <- n / N
-
-  # propensity score model for trial participation
-  ps_model <- glm(as.formula(ps_formula), data = df, family = "binomial")
-  pi_SX <- predict(ps_model, newdata = df, type = "response")
-
-  # density ratio weights
-  w00 <- (pi_SX / (1 - pi_SX)) * ((1 - pi_S) / pi_S)
+  # propensity score model and density ratio weights
+  wts <- .ec_weights(df, ps_formula, S)
+  ps_model <- wts$ps_model
+  pi_SX <- wts$pi_SX
+  w00 <- wts$w00
   w00_ext <- w00[S == 0]
 
   # external control mean
@@ -244,7 +239,7 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
 
   # bread: A matrix blocks (Eq 12)
   A33 <- diag(rep(-mean((1 - S) * core$w00 / (1 - pi_S)), n_time), nrow = n_time)
-  A34 <- t((1 - S) * core$pi_SX / (pi_S * (1 - core$pi_SX)) *
+  A34 <- t((1 - S) * core$w00 / (1 - pi_S) *
     sweep(Y, 2, core$mu00)) %*% X_model / N
   A44 <- t(X_model) %*% diag(-core$pi_SX * (1 - core$pi_SX)) %*% X_model / N
 
@@ -283,12 +278,11 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
 #' @param data internal data frame.
 #' @param indices bootstrap sample indices.
 #' @param outcomes outcome column names.
-#' @param covariates covariate column names.
 #' @param ps_formula propensity score formula.
 #' @param borrow_wt pre-computed borrowing weight.
 #' @return numeric vector of tau estimates.
 #' @noRd
-.ec_ipw_boot_statistic <- function(data, indices, outcomes, covariates,
+.ec_ipw_boot_statistic <- function(data, indices, outcomes,
                                    ps_formula, borrow_wt) {
   d <- data[indices, , drop = FALSE]
   Y <- as.matrix(d[, outcomes, drop = FALSE])

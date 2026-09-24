@@ -26,12 +26,9 @@ export(simulate_trial_status)
 export(simulate_trt_assign)
 import(boot)
 import(checkmate)
-import(dplyr)
 import(futile.logger)
-import(future.apply)
 import(mvtnorm)
 import(progress)
-import(tidyr)
 importFrom(CVXR,
   Minimize,
   Problem,

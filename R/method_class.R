@@ -74,7 +74,7 @@ setGeneric("estimate", function(method, ...) standardGeneric("estimate"))
 #'   a numeric vector of point estimates.
 #' @param n_estimates number of estimates returned by statistic (length of tau).
 #' @param bootstrap number of bootstrap replicates.
-#' @param bootstrap_ci_type short CI type name ("perc", "bca", etc.).
+#' @param bootstrap_ci_type short CI type name ("perc", "bca", "norm", "basic").
 #' @param alpha significance level for CIs.
 #' @param parallel parallelization type for boot ("no", "multicore", "snow").
 #' @param ncpus number of CPUs for parallel bootstrap.
@@ -89,19 +89,25 @@ setGeneric("estimate", function(method, ...) standardGeneric("estimate"))
   ci_type_long <- switch(bootstrap_ci_type,
     norm = "normal",
     bca = "bca",
-    stud = "student",
     perc = "percent",
     basic = "basic"
   )
 
+  # capture the extra arguments so boot sees a plain (data, indices)
+  # statistic. boot.ci(type = "bca") re-invokes it through empinf(), which
+  # does not forward boot's ... and would otherwise error.
+  dots <- list(...)
+  stat_fn <- function(data, indices) {
+    do.call(statistic, c(list(data, indices), dots))
+  }
+
   boot_out <- boot::boot(
     data = df,
-    statistic = statistic,
+    statistic = stat_fn,
     R = bootstrap,
     strata = group_id,
     parallel = parallel,
-    ncpus = ncpus,
-    ...
+    ncpus = ncpus
   )
 
   ci_bounds <- vapply(seq_len(n_estimates), \(i) {
@@ -109,7 +115,9 @@ setGeneric("estimate", function(method, ...) standardGeneric("estimate"))
       conf = 1 - alpha,
       type = bootstrap_ci_type, index = i
     )
-    ci[[ci_type_long]][4:5]
+    # the normal component is a 3-column matrix, the others are 5-column
+    bounds <- if (ci_type_long == "normal") 2:3 else 4:5
+    ci[[ci_type_long]][bounds]
   }, numeric(2))
 
   sd_boot <- sqrt(diag(var(boot_out$t)))

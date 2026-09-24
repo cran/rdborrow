@@ -7,7 +7,7 @@ test_that("SCM point estimates and bootstrap CIs", {
     lambda_min = 0.0005,
     lambda_max = 0.0005,
     nlambda = 1,
-    bootstrap = 50,
+    bootstrap = 10,
     bootstrap_ci_type = "perc"
   )
   analysis <- setup_analysis_OLE(

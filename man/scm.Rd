@@ -47,5 +47,5 @@ scm(lambda_min = 0, lambda_max = 0.001, nlambda = 2, bootstrap = 50)
 Zhou et al. (2024). Estimating treatment effect in randomized trial
 after control to treatment crossover using external controls.
 \emph{Journal of Biopharmaceutical Statistics}.
-\doi{10.1080/10543406.2024.2444222}
+\doi{10.1080/10543406.2024.2330209}
 }

@@ -81,21 +81,21 @@ simulate_X_mixture <- function(n, p_cat, p_cont, cat_level_list,
     N <- c(rmultinom(1, n, cat_comb_prob))
 
     covariate_cat <- expand.grid(cat_level_list)
-    covariate_cat <- covariate_cat |>
-      mutate(count = N) |>
-      uncount(count)
+    covariate_cat <- covariate_cat[rep(seq_len(num_comb), times = N), , drop = FALSE]
+    rownames(covariate_cat) <- NULL
 
     # draw continuous covariates per component----
     if (p_cont == 0) {
       covariate <- covariate_cat
     } else {
-      covariate_cont <- bind_rows(lapply(1:num_comb, function(k) {
+      covariate_cont <- do.call(rbind, lapply(seq_len(num_comb), function(k) {
         data.frame(rmvnorm(
           N[k],
           mean = cont_para_list[[k]]$mean,
           sigma = cont_para_list[[k]]$sigma
         ))
       }))
+      rownames(covariate_cont) <- NULL
       covariate <- cbind(covariate_cat, covariate_cont)
     }
   }

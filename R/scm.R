@@ -47,7 +47,7 @@ NULL
 #' Zhou et al. (2024). Estimating treatment effect in randomized trial
 #' after control to treatment crossover using external controls.
 #' \emph{Journal of Biopharmaceutical Statistics}.
-#' \doi{10.1080/10543406.2024.2444222}
+#' \doi{10.1080/10543406.2024.2330209}
 #'
 #' @export
 #'
@@ -71,7 +71,7 @@ scm <- function(lambda_min = 0,
     bootstrap_ci_type <- "perc"
   }
   checkmate::assert_choice(
-    bootstrap_ci_type, c("perc", "bca", "norm", "basic", "stud")
+    bootstrap_ci_type, c("perc", "bca", "norm", "basic")
   )
 
   .scm_method(

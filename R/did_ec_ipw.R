@@ -37,7 +37,7 @@ NULL
 #' Zhou et al. (2024). Estimating treatment effect in randomized trial
 #' after control to treatment crossover using external controls.
 #' \emph{Journal of Biopharmaceutical Statistics}.
-#' \doi{10.1080/10543406.2024.2444222}
+#' \doi{10.1080/10543406.2024.2330209}
 #'
 #' @export
 #'
@@ -59,7 +59,7 @@ did_ec_ipw <- function(ps_formula,
     bootstrap_ci_type <- "perc"
   }
   checkmate::assert_choice(
-    bootstrap_ci_type, c("perc", "bca", "norm", "basic", "stud")
+    bootstrap_ci_type, c("perc", "bca", "norm", "basic")
   )
 
   .did_ec_ipw_method(
@@ -126,17 +126,16 @@ setMethod("estimate", "did_ec_ipw_method", function(method, data, outcomes,
   # see Zhou 2024b: Eq 4 (identification), Appendix B (sample estimator)
 
   n <- sum(S)
-  N <- length(S)
-  pi_S <- n / N
   n_time <- ncol(Y)
 
-  # propensity score model for trial participation
-  ps_model <- glm(as.formula(ps_formula), data = df, family = "binomial")
-  pi_SX <- predict(ps_model, newdata = df, type = "response")
+  # propensity score model and density ratio weights
+  w00 <- .ec_weights(df, ps_formula, S)$w00
 
   # treatment assignment model
   if (is.null(trt_formula)) {
-    pi_AX <- sum(A[S == 1]) / n
+    # marginal randomization probability, recycled so the weights below
+    # can be subset by a length-N logical like the modelled branch
+    pi_AX <- rep(sum(A[S == 1]) / n, length(S))
   } else {
     trt_model <- glm(as.formula(trt_formula),
       data = df[S == 1, , drop = FALSE], family = "binomial"
@@ -144,10 +143,9 @@ setMethod("estimate", "did_ec_ipw_method", function(method, data, outcomes,
     pi_AX <- predict(trt_model, newdata = df, type = "response")
   }
 
-  # weights (same as primary: W11, W10, W0)
+  # treatment weights (same as primary: W11, W10)
   w11 <- 1 / pi_AX
   w10 <- 1 / (1 - pi_AX)
-  w00 <- (pi_SX / (1 - pi_SX)) * ((1 - pi_S) / pi_S)
 
   # normalized weighted outcomes per group
   Y_trt <- Y[S == 1 & A == 1, , drop = FALSE]

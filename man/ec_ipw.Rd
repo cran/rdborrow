@@ -19,8 +19,7 @@ optimal weight, \code{0} for RCT-only, or a value in (0, 1].}
 
 \item{bootstrap_ci_type}{Bootstrap CI type, or \code{NULL} (default)
 which resolves to \code{"perc"} when \code{bootstrap} is set. One of
-\code{"perc"}, \code{"bca"}, \code{"norm"}, \code{"basic"}, or
-\code{"stud"}.}
+\code{"perc"}, \code{"bca"}, \code{"norm"}, or \code{"basic"}.}
 }
 \value{
 An S4 object of class \code{ec_ipw_method}.
