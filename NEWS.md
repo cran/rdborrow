@@ -1,3 +1,8 @@
+# rdborrow 0.0.4.2
+
+## Bug fixes
+- Two tests asserted exact floating-point equality between a marginal treatment model and an equivalent intercept-only model. The two are mathematically identical but computed by different routes, so they can differ in the last bit under BLAS libraries such as BLIS; both now compare with a tolerance.
+
 # rdborrow 0.0.4.1
 
 ## Breaking changes

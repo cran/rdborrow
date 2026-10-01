@@ -108,5 +108,8 @@ test_that("EC-IPW with bootstrap", {
 })
 
 test_that("setup_method_weighting is deprecated", {
-  expect_error(setup_method_weighting(), "no longer functional")
+  expect_warning(
+    expect_error(setup_method_weighting(), "no longer functional"),
+    class = "deprecatedWarning"
+  )
 })

@@ -76,5 +76,5 @@ test_that("DID-EC-AIPW marginal model matches an intercept-only treatment model"
   marginal <- .did_ec_aipw_core(df, Y, df$S, df$A, 2, ps, NULL, of)$tau
   intercept <- .did_ec_aipw_core(df, Y, df$S, df$A, 2, ps, "A ~ 1", of)$tau
 
-  expect_equal(marginal, intercept, tolerance = 0)
+  expect_equal(marginal, intercept, tolerance = 1e-12)
 })

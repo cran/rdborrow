@@ -12,7 +12,7 @@ Description: Implements causal inference methods for incorporating external
     conducting power analyses for sample size determination. Methods are
     based on Zhou et al. (2024) <doi:10.1093/jrsssa/qnae075> and
     Zhou et al. (2024) <doi:10.1080/10543406.2024.2330209>.
-Version: 0.0.4.1
+Version: 0.0.4.2
 License: Apache License (>= 2)
 Authors@R: c(
     person(
@@ -73,7 +73,7 @@ Encoding: UTF-8
 Language: en-US
 Config/roxygen2/version: 8.1.0
 NeedsCompilation: no
-Packaged: 2026-09-24 17:41:51 UTC; matts
+Packaged: 2026-09-28 21:53:14 UTC; matts
 Author: Lei Shi [aut],
   Matt Secrest [cre, aut] (ORCID:
     <https://orcid.org/0000-0002-0939-4902>),
@@ -83,4 +83,4 @@ Author: Lei Shi [aut],
   Genentech, Inc. [cph]
 Maintainer: Matt Secrest <secrmatt@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-09-24 18:20:02 UTC
+Date/Publication: 2026-10-01 07:10:19 UTC
