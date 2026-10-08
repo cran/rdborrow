@@ -16,16 +16,26 @@ setup_analysis_OLE(
 )
 }
 \arguments{
-\item{data}{A data frame containing all subject-level data.}
+\item{data}{A data frame containing all subject-level data.
+It must have trial treated patients, trial controls, and external
+controls.}
 
-\item{trial_status_col_name}{Name of the trial status column.}
+\item{trial_status_col_name}{Name of the trial status column: 1 for
+trial patients, 0 for external controls. Must be numeric or logical.}
 
-\item{treatment_col_name}{Name of the treatment column.}
+\item{treatment_col_name}{Name of the treatment column: 1 for treated, 0
+for control. Must be numeric or logical, not a factor. External controls
+must have 0.}
 
 \item{outcome_col_name}{Character vector of outcome column names
-covering both placebo-controlled and OLE periods.}
+covering both placebo-controlled and OLE periods, in visit order. The
+position of each outcome sets its period and its result row name. The columns must have
+no missing values.}
 
-\item{covariates_col_name}{Character vector of covariate column names.}
+\item{covariates_col_name}{Character vector of covariate column names. The
+columns must have no missing values.
+Outcome and covariate columns cannot be named \code{S} or \code{A}, or
+be the trial-status or treatment column.}
 
 \item{method_OLE_obj}{A method object created by
 \code{\link{did_ec_ipw}}, \code{\link{did_ec_aipw}},
@@ -39,7 +49,8 @@ T_cross} columns are from the open-label extension phase and are
 used to estimate the treatment effect. Must be a positive integer
 strictly less than \code{length(outcome_col_name)}.}
 
-\item{alpha}{Significance level (default 0.05).}
+\item{alpha}{Significance level, more than 0 and less than 1 (default
+0.05).}
 }
 \value{
 An object of class \code{analysis_OLE_obj}, to be passed to

@@ -28,12 +28,38 @@ NULL
 #'
 #' @param ps_formula Formula string for the propensity score model
 #'   predicting trial participation.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
 #' @param trt_formula Formula string for the treatment assignment model,
-#'   or \code{NULL} (default) for marginal probability.
+#'   or \code{NULL} (default) for the marginal probability of treatment in
+#'   the trial. The model is fit on trial patients only, and its predicted
+#'   probabilities set the inverse-probability weights of trial treated and
+#'   trial control patients. The left-hand side is replaced by the treatment
+#'   column, so it can be any name.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
 #' @param outcome_formula Character vector of outcome model formulas,
-#'   one per time point.
-#' @param bootstrap Number of bootstrap replicates. Defaults to 500.
-#' @param bootstrap_ci_type Bootstrap CI type. Defaults to \code{"perc"}.
+#'   one per outcome. Each formula is matched to an outcome by its left-hand
+#'   side, so the order does not matter. The left-hand side must be the
+#'   outcome name itself; to model a transformed outcome, transform the
+#'   column first.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
+#' @param bootstrap Number of bootstrap replicates (at least 2).
+#'   Defaults to 500.
+#'   Use about 1000 or more for reported intervals; small values are for
+#'   quick checks only, and their interval can exclude the point estimate.
+#' @param bootstrap_ci_type Bootstrap CI type: one of \code{"perc"}
+#'   (default), \code{"bca"}, \code{"norm"}, or \code{"basic"}.
+#'   \code{"bca"} is slow when \code{bootstrap} is smaller than the number
+#'   of patients: \code{boot::boot.ci()} then refits the estimator once for
+#'   each patient.
 #'
 #' @return An S4 object of class \code{did_ec_aipw_method}.
 #'
@@ -65,7 +91,7 @@ did_ec_aipw <- function(ps_formula,
   checkmate::assert_string(ps_formula)
   checkmate::assert_string(trt_formula, null.ok = TRUE)
   checkmate::assert_character(outcome_formula, min.len = 1)
-  checkmate::assert_count(bootstrap, positive = TRUE)
+  checkmate::assert_int(bootstrap, lower = 2)
 
   if (is.null(bootstrap_ci_type)) {
     bootstrap_ci_type <- "perc"
@@ -90,25 +116,36 @@ setMethod("estimate", "did_ec_aipw_method", function(method, data, outcomes,
                                                      covariates, alpha = 0.05,
                                                      quiet = TRUE,
                                                      T_cross) {
+  .check_alpha(alpha)
+  T_cross <- .check_T_cross(T_cross, outcomes)
   df <- .build_analysis_df(data, outcomes, treatment, trial_status, covariates)
   Y <- as.matrix(df[, outcomes, drop = FALSE])
   S <- df$S
   A <- df$A
 
-  ps_formula <- sub("^[^~]*~", paste0(trial_status, " ~"), method@ps_formula)
+  .check_formula_covariates(method@ps_formula, covariates, outcomes, "ps_formula")
+  .check_formula_covariates(method@trt_formula, covariates, outcomes, "trt_formula")
+  .check_formula_covariates(
+    method@outcome_formula, covariates, outcomes, "outcome_formula"
+  )
+  ps_formula <- sub("^[^~]*~", "S ~", method@ps_formula)
   trt_formula <- method@trt_formula
   if (!is.null(trt_formula)) {
-    trt_formula <- sub("^[^~]*~", paste0(treatment, " ~"), trt_formula)
+    trt_formula <- sub("^[^~]*~", "A ~", trt_formula)
   }
 
-  if (!quiet) cat("Running DID-EC-AIPW estimator...\n")
+  outcome_formula <- .match_outcome_formulas(
+    method@outcome_formula, outcomes, "outcome_formula"
+  )
+
+  if (!quiet) message("Running DID-EC-AIPW estimator...")
 
   result <- .did_ec_aipw_core(
-    df, Y, S, A, T_cross, ps_formula, trt_formula, method@outcome_formula
+    df, Y, S, A, T_cross, ps_formula, trt_formula, outcome_formula
   )
   tau <- result$tau
 
-  if (!quiet) cat("Running bootstrap inference...\n")
+  if (!quiet) message("Running bootstrap inference...")
 
   n_ole <- ncol(Y) - T_cross
   boot_res <- .run_bootstrap(
@@ -116,12 +153,13 @@ setMethod("estimate", "did_ec_aipw_method", function(method, data, outcomes,
     n_estimates = n_ole, bootstrap = method@bootstrap,
     bootstrap_ci_type = method@bootstrap_ci_type, alpha = alpha,
     outcomes = outcomes, ps_formula = ps_formula,
-    trt_formula = trt_formula, outcome_formula = method@outcome_formula,
+    trt_formula = trt_formula, outcome_formula = outcome_formula,
     T_cross = T_cross
   )
 
   data.frame(
     point_estimates = tau,
+    standard_deviation = boot_res$sd_boot,
     lower_CI_boot = boot_res$lower_ci,
     upper_CI_boot = boot_res$upper_ci,
     row.names = paste0("tau", (T_cross + 1):ncol(Y))
@@ -130,7 +168,7 @@ setMethod("estimate", "did_ec_aipw_method", function(method, data, outcomes,
 
 # internal helpers----
 
-#' DID-EC-AIPW point estimate (Zhou 2024b, Eq 5 / Appendix B).
+#' DID-EC-AIPW point estimate (Zhou 2024, Eq 5 / Appendix B).
 #' @param df internal data frame.
 #' @param Y outcome matrix (N x T).
 #' @param S trial participation vector.
@@ -143,7 +181,7 @@ setMethod("estimate", "did_ec_aipw_method", function(method, data, outcomes,
 #' @noRd
 .did_ec_aipw_core <- function(df, Y, S, A, T_cross, ps_formula,
                               trt_formula, outcome_formula) {
-  # see Zhou 2024b: Eq 5 (identification), Appendix B (sample estimator)
+  # see Zhou 2024: Eq 5 (identification), Appendix B (sample estimator)
 
   n <- sum(S)
   N <- length(S)

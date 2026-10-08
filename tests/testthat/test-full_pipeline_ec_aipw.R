@@ -1,6 +1,5 @@
-tol <- 1e-6
-
 test_that("EC-AIPW optimal weight", {
+  tol <- 1e-6
   method <- ec_aipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     outcome_formula = c(
@@ -30,6 +29,7 @@ test_that("EC-AIPW optimal weight", {
 })
 
 test_that("EC-AIPW zero weight (no borrowing)", {
+  tol <- 1e-6
   method <- ec_aipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     outcome_formula = c(
@@ -60,6 +60,7 @@ test_that("EC-AIPW zero weight (no borrowing)", {
 })
 
 test_that("EC-AIPW fixed weight 0.3", {
+  tol <- 1e-6
   method <- ec_aipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     outcome_formula = c(
@@ -90,6 +91,7 @@ test_that("EC-AIPW fixed weight 0.3", {
 })
 
 test_that("EC-AIPW with bootstrap", {
+  tol <- 1e-6
   method <- ec_aipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     outcome_formula = c(
@@ -139,5 +141,5 @@ test_that("EC-AIPW errors when outcome_formula length mismatches outcomes", {
     covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
     method_weighting_obj = method
   )
-  expect_error(run_analysis(analysis), "one formula per outcome")
+  expect_error(run_analysis(analysis), "no formula for: y2")
 })

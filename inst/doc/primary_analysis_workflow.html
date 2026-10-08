@@ -12,7 +12,7 @@
 
 <meta name="author" content="Lei Shi, Matthew Secrest" />
 
-<meta name="date" content="2026-09-28" />
+<meta name="date" content="2026-10-08" />
 
 <title>Primary Analysis Workflow</title>
 
@@ -340,14 +340,14 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Primary Analysis Workflow</h1>
 <h4 class="author">Lei Shi, Matthew Secrest</h4>
-<h4 class="date">2026-09-28</h4>
+<h4 class="date">2026-10-08</h4>
 
 
 
 <div id="primary-analysis" class="section level2">
 <h2>Primary analysis</h2>
 <p>This vignette demonstrates the primary analysis workflow using the
-EC-IPW and EC-AIPW weighting estimators proposed in <a href="https://doi.org/10.1093/jrsssa/qnae075">Zhou et al. (2024)</a> for
+EC-IPW and EC-AIPW weighting estimators proposed in <a href="https://doi.org/10.1093/jrsssa/qnae075">Zhou et al. (2025)</a> for
 incorporating external controls in randomized trials with longitudinal
 outcomes.</p>
 <div id="load-data" class="section level3">
@@ -427,11 +427,12 @@ outcomes.</p>
 <span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="at">method_weighting_obj =</span> method</span>
 <span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>)</span>
 <span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a></span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
 <pre><code>## $results
 ##      point_estimates standard_deviation lower_CI_boot upper_CI_boot
-## tau1      -0.1971969          0.5989789    -1.4378865      1.296664
-## tau2       0.4697209          0.5701665    -0.5582876      1.597238
+## tau1      -0.1971969          0.4882918    -1.3705232     0.9723497
+## tau2       0.4697209          0.5516391    -0.8097839     1.4117831
 ## 
 ## $borrow_weight
 ## [1] 0.1475196</code></pre>
@@ -444,6 +445,10 @@ making it doubly robust: consistent if either the propensity score model
 or the outcome model is correctly specified.</p>
 <div id="no-borrowing-weight-0-1" class="section level4">
 <h4>3.1 No borrowing (weight = 0)</h4>
+<p>With <code>weight = 0</code>, external controls get no weight in the
+control mean, but EC-AIPW still fits its outcome model on all controls,
+trial and external. The estimate remains valid by randomization; the
+external data affect only its precision.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>method <span class="ot">&lt;-</span> <span class="fu">ec_aipw</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">ps_formula =</span> <span class="st">&quot;S ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">outcome_formula =</span> <span class="fu">c</span>(</span>
@@ -520,11 +525,12 @@ or the outcome model is correctly specified.</p>
 <span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>  <span class="at">method_weighting_obj =</span> method</span>
 <span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>)</span>
 <span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a></span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
 <pre><code>## $results
 ##      point_estimates standard_deviation lower_CI_boot upper_CI_boot
-## tau1      -0.5463256          0.6225099    -1.9966744      1.078554
-## tau2       0.5401750          0.5402187    -0.4664991      1.614346
+## tau1      -0.5463256          0.5266025     -1.649944     0.8207523
+## tau2       0.5401750          0.6137536     -1.055467     1.6622471
 ## 
 ## $borrow_weight
 ## [1] 0.1475196</code></pre>
@@ -542,7 +548,7 @@ applying the package.</li>
 <div id="references" class="section level2">
 <h2>References</h2>
 <ul>
-<li>Zhou X, Zhu J, Drake C, Pang H (2024). “Causal estimators for
+<li>Zhou X, Zhu J, Drake C, Pang H (2025). “Causal estimators for
 incorporating external controls in randomized trials with longitudinal
 outcomes.” <em>Journal of the Royal Statistical Society Series A:
 Statistics in Society</em>. doi: <a href="https://doi.org/10.1093/jrsssa/qnae075">10.1093/jrsssa/qnae075</a>.</li>

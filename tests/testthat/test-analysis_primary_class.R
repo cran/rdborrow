@@ -12,6 +12,12 @@ test_that("setup_analysis_primary returns valid object", {
   expect_identical(obj@alpha, 0.05)
 })
 
+test_that("setup_analysis_primary returns its object visibly", {
+  expect_visible(setup_analysis_primary(
+    SyntheticData, "S", "A", "y1", "x1", ec_ipw("S ~ x1")
+  ))
+})
+
 test_that("setup_analysis_primary inherits base validation", {
   method <- ec_ipw(ps_formula = "S ~ x1")
   expect_error(setup_analysis_primary(

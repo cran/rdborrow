@@ -5,7 +5,27 @@
 \alias{SyntheticData}
 \title{Synthetic example dataset for rdborrow}
 \format{
-A data frame.
+A data frame with 300 rows and 12 columns: 100 trial patients on
+  treatment (\code{S = 1}, \code{A = 1}), 100 trial controls
+  (\code{S = 1}, \code{A = 0}), and 100 external controls (\code{S = 0},
+  \code{A = 0}). The covariates mimic a spinal muscular atrophy (SMA)
+  study.
+  \describe{
+    \item{x1}{SMA type: 0 = type II, 1 = type III.}
+    \item{x2}{SMN2 copy number: 0 = 3 copies, 1 = 4 copies.}
+    \item{x3}{Scoliosis: 0 = no, 1 = yes.}
+    \item{x4}{Age at enrollment, in years.}
+    \item{x5}{Baseline outcome.}
+    \item{A}{Treatment: 1 = treated, 0 = control.}
+    \item{S}{Trial status: 1 = trial patient, 0 = external control.}
+    \item{T_cross}{Last visit before trial controls cross over to
+      treatment: 2 for all rows.}
+    \item{y1, y2, y3, y4}{Outcomes at visits 1 to 4.}
+  }
+}
+\source{
+Simulated with \code{\link{simulate_trial}()}. The script is
+  \code{data-raw/SyntheticData.R} in the package source on GitHub.
 }
 \usage{
 data(SyntheticData)

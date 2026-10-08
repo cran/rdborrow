@@ -14,17 +14,32 @@ did_ec_or(
 }
 \arguments{
 \item{outcome_formula_ext}{Character vector of outcome model formulas
-for external controls, one per time point.}
+for external controls, one per outcome.}
 
 \item{outcome_formula_rct_ctrl}{Character vector of outcome model
-formulas for RCT control subjects, one per time point.}
+formulas for RCT control subjects, one per outcome.}
 
 \item{outcome_formula_rct_trt}{Character vector of outcome model
-formulas for RCT treated subjects, one per time point.}
+formulas for RCT treated subjects, one per outcome. In all three
+arguments, each formula is matched to an outcome by its left-hand side,
+so the order does not matter. The left-hand side must be the outcome
+name itself; to model a transformed outcome, transform the column
+first.
+The right-hand side should use only columns in
+\code{covariates_col_name}. \code{.} or any other column is an error;
+an outcome gives a warning, because adjusting for an outcome measured
+after randomization can bias the treatment effect.}
 
-\item{bootstrap}{Number of bootstrap replicates. Defaults to 500.}
+\item{bootstrap}{Number of bootstrap replicates (at least 2).
+Defaults to 500.
+Use about 1000 or more for reported intervals; small values are for
+quick checks only, and their interval can exclude the point estimate.}
 
-\item{bootstrap_ci_type}{Bootstrap CI type. Defaults to \code{"perc"}.}
+\item{bootstrap_ci_type}{Bootstrap CI type: one of \code{"perc"}
+(default), \code{"bca"}, \code{"norm"}, or \code{"basic"}.
+\code{"bca"} is slow when \code{bootstrap} is smaller than the number
+of patients: \code{boot::boot.ci()} then refits the estimator once for
+each patient.}
 }
 \value{
 An S4 object of class \code{did_ec_or_method}.

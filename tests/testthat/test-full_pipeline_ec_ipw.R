@@ -1,6 +1,5 @@
-tol <- 1e-6
-
 test_that("EC-IPW optimal weight", {
+  tol <- 1e-6
   method <- ec_ipw(ps_formula = "S ~ x1 + x2 + x3 + x4 + x5")
   analysis <- setup_analysis_primary(
     data = SyntheticData,
@@ -24,6 +23,7 @@ test_that("EC-IPW optimal weight", {
 })
 
 test_that("EC-IPW zero weight (no borrowing)", {
+  tol <- 1e-6
   method <- ec_ipw(ps_formula = "S ~ x1 + x2 + x3 + x4 + x5", weight = 0)
   analysis <- setup_analysis_primary(
     data = SyntheticData,
@@ -49,6 +49,7 @@ test_that("EC-IPW zero weight (no borrowing)", {
 })
 
 test_that("EC-IPW fixed weight 0.3", {
+  tol <- 1e-6
   method <- ec_ipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     weight = 0.3
@@ -75,6 +76,7 @@ test_that("EC-IPW fixed weight 0.3", {
 })
 
 test_that("EC-IPW with bootstrap", {
+  tol <- 1e-6
   method <- ec_ipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     bootstrap = 50,

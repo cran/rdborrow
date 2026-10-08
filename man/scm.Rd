@@ -15,20 +15,31 @@ scm(
 )
 }
 \arguments{
-\item{lambda_min}{Minimum penalty parameter for LOOCV.}
+\item{lambda_min}{Minimum penalty parameter for LOOCV. A finite number of
+at least 0.}
 
-\item{lambda_max}{Maximum penalty parameter for LOOCV.}
+\item{lambda_max}{Maximum penalty parameter for LOOCV. A finite number of
+at least \code{lambda_min}.}
 
-\item{nlambda}{Number of lambda values to evaluate in LOOCV.}
+\item{nlambda}{Number of lambda values to evaluate in LOOCV, evenly spaced
+from \code{lambda_min} to \code{lambda_max}. With \code{nlambda = 1},
+\code{lambda_max} must equal \code{lambda_min}.}
 
 \item{parallel}{Parallelization type for bootstrap (\code{"no"},
 \code{"multicore"}, or \code{"snow"}).}
 
 \item{ncpus}{Number of CPUs for parallel bootstrap.}
 
-\item{bootstrap}{Number of bootstrap replicates. Defaults to 200.}
+\item{bootstrap}{Number of bootstrap replicates (at least 2).
+Defaults to 200.
+Use about 1000 or more for reported intervals; small values are for
+quick checks only, and their interval can exclude the point estimate.}
 
-\item{bootstrap_ci_type}{Bootstrap CI type. Defaults to \code{"perc"}.}
+\item{bootstrap_ci_type}{Bootstrap CI type: one of \code{"perc"}
+(default), \code{"bca"}, \code{"norm"}, or \code{"basic"}.
+\code{"bca"} is slow when \code{bootstrap} is smaller than the number
+of patients: \code{boot::boot.ci()} then refits the estimator once for
+each patient.}
 }
 \value{
 An S4 object of class \code{scm_method}.
@@ -38,7 +49,15 @@ Creates a method object for synthetic control estimation with
 external control borrowing for the open-label extension phase
 (Zhou et al., 2024). Constructs a weighted combination of external
 controls matching each RCT control subject on covariates and
-pre-crossover outcomes.
+pre-crossover outcomes. The penalty is chosen by leave-one-out
+cross-validation over the external controls, so the data needs at least 2
+external controls. The covariates must be numeric or logical; code a
+factor as 0/1 indicators first.
+}
+\details{
+The analysis result from \code{\link{run_analysis}()} has an
+  attribute \code{"lambda"}, the penalty that cross-validation selected:
+  \code{attr(result, "lambda")}.
 }
 \examples{
 scm(lambda_min = 0, lambda_max = 0.001, nlambda = 2, bootstrap = 50)

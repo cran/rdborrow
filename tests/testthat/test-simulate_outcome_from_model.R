@@ -107,3 +107,14 @@ test_that("simulate_outcome_from_model validates inputs", {
   expect_error(simulate_outcome_from_model("bad", A, specs, FALSE, 1))
   expect_error(simulate_outcome_from_model(X, c(1, 2), specs, FALSE, 1))
 })
+
+test_that("simulate_outcome_from_model treats a near-integer T_cross as that integer", {
+  specs <- rep(list(list(
+    effect = 10, model_form_x = c("1" = 0, x1 = 0),
+    noise_mean = 0, noise_sd = 0
+  )), 4)
+  generate <- function(T_cross) {
+    simulate_outcome_from_model(data.frame(x1 = 0), 0, specs, TRUE, T_cross)
+  }
+  expect_identical(generate(0.6 / 0.2), generate(3))
+})

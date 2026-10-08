@@ -55,6 +55,23 @@ test_that("setup_simulation validates alpha", {
   ))
 })
 
+test_that("setup_simulation rejects alpha of 0 or 1", {
+  for (a in c(0, 1)) {
+    expect_error(
+      setup_simulation(
+        trial_status_col_name = "S",
+        treatment_col_name = "A",
+        outcome_col_name = "y1",
+        covariates_col_name = "x1",
+        method_obj_list = list(setup_method()),
+        method_description = "m",
+        alpha = a
+      ),
+      "alpha.*between 0 and 1"
+    )
+  }
+})
+
 test_that("show method prints without error", {
   obj <- setup_simulation(
     trial_status_col_name = "S",
@@ -76,12 +93,12 @@ test_that("setup_simulation_primary returns valid object", {
     outcome_col_name = c("y1", "y2"),
     covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
     method_obj_list = list(setup_method(method_name = "AIPW")),
-    true_effect = c(0, 0),
+    true_effect = 0,
     method_description = "AIPW"
   )
   expect_s4_class(obj, "simulation_primary_obj")
   expect_length(obj@data_matrix_list_null, 2)
-  expect_identical(obj@true_effect, c(0, 0))
+  expect_identical(obj@true_effect, 0)
   expect_identical(obj@data_matrix_list_alt, list())
   expect_identical(obj@alt_effect, numeric(0))
 })
@@ -114,16 +131,40 @@ test_that("setup_simulation_OLE returns valid object", {
     data_matrix_list = list(SyntheticData),
     trial_status_col_name = "S",
     treatment_col_name = "A",
-    outcome_col_name = c("y1", "y2"),
+    outcome_col_name = c("y1", "y2", "y3", "y4"),
     covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
     method_obj_list = list(setup_method(method_name = "AIPW")),
     T_cross = 2,
-    true_effect = c(0, 0),
+    true_effect = 0,
     method_description = "AIPW"
   )
   expect_s4_class(obj, "simulation_OLE_obj")
   expect_identical(obj@T_cross, 2)
-  expect_identical(obj@true_effect, c(0, 0))
+  expect_identical(obj@true_effect, 0)
+})
+
+test_that("simulation setup requires a single true_effect", {
+  args <- list(
+    trial_status_col_name = "S",
+    treatment_col_name = "A",
+    outcome_col_name = c("y1", "y2"),
+    covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
+    method_obj_list = list(setup_method(method_name = "AIPW")),
+    true_effect = c(-1, 1),
+    method_description = "AIPW"
+  )
+  expect_error(
+    do.call(setup_simulation_primary, c(
+      list(data_matrix_list_null = list(SyntheticData)), args
+    )),
+    "true_effect"
+  )
+  expect_error(
+    do.call(setup_simulation_OLE, c(
+      list(data_matrix_list = list(SyntheticData), T_cross = 1), args
+    )),
+    "true_effect"
+  )
 })
 
 test_that("setup_simulation_OLE validates T_cross", {
@@ -138,4 +179,24 @@ test_that("setup_simulation_OLE validates T_cross", {
     true_effect = 0,
     method_description = "m"
   ))
+})
+
+test_that("setup_simulation_OLE rounds T_cross and checks it against the outcomes", {
+  setup <- function(T_cross) {
+    setup_simulation_OLE(
+      data_matrix_list = list(SyntheticData),
+      trial_status_col_name = "S",
+      treatment_col_name = "A",
+      outcome_col_name = c("y1", "y2", "y3", "y4"),
+      covariates_col_name = "x1",
+      method_obj_list = list(setup_method()),
+      T_cross = T_cross,
+      true_effect = 0,
+      method_description = "m"
+    )
+  }
+  expect_identical(setup(0.6 / 0.2)@T_cross, 3)
+  expect_error(setup(0), "T_cross")
+  expect_error(setup(2.5), "T_cross")
+  expect_error(setup(4), "T_cross must be less")
 })

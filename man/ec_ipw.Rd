@@ -9,24 +9,34 @@ ec_ipw(ps_formula, weight = NULL, bootstrap = NULL, bootstrap_ci_type = NULL)
 \arguments{
 \item{ps_formula}{Formula string for the propensity score model
 predicting trial participation. The left-hand side is replaced
-internally (e.g., \code{"S ~ x1 + x2 + x3"}).}
+internally (e.g., \code{"S ~ x1 + x2 + x3"}).
+The right-hand side should use only columns in
+\code{covariates_col_name}. \code{.} or any other column is an error;
+an outcome gives a warning, because adjusting for an outcome measured
+after randomization can bias the treatment effect.}
 
 \item{weight}{Borrowing weight. \code{NULL} (default) for data-adaptive
 optimal weight, \code{0} for RCT-only, or a value in (0, 1].}
 
-\item{bootstrap}{Number of bootstrap replicates, or \code{NULL}
-(default) for sandwich variance with normal CIs.}
+\item{bootstrap}{Number of bootstrap replicates (at least 2), or \code{NULL}
+(default) for sandwich variance with normal CIs.
+Use about 1000 or more for reported intervals; small values are for
+quick checks only, and their interval can exclude the point estimate.}
 
 \item{bootstrap_ci_type}{Bootstrap CI type, or \code{NULL} (default)
 which resolves to \code{"perc"} when \code{bootstrap} is set. One of
-\code{"perc"}, \code{"bca"}, \code{"norm"}, or \code{"basic"}.}
+\code{"perc"}, \code{"bca"}, \code{"norm"}, or \code{"basic"}. Needs
+\code{bootstrap}.
+\code{"bca"} is slow when \code{bootstrap} is smaller than the number
+of patients: \code{boot::boot.ci()} then refits the estimator once for
+each patient.}
 }
 \value{
 An S4 object of class \code{ec_ipw_method}.
 }
 \description{
 Creates a method object for IPW estimation with external control
-borrowing (Zhou et al., 2024). Pass to \code{\link{setup_analysis_primary}}
+borrowing (Zhou et al., 2025). Pass to \code{\link{setup_analysis_primary}}
 and \code{\link{run_analysis}}.
 }
 \examples{
@@ -50,7 +60,7 @@ ec_ipw(
 )
 }
 \references{
-Zhou et al. (2024). Causal estimators for incorporating external
+Zhou et al. (2025). Causal estimators for incorporating external
 controls in randomized trials with longitudinal outcomes.
-\emph{JRSS-A}. \doi{10.1093/jrsssa/qnae075}
+\emph{JRSS-A}, 188(3), 791-818. \doi{10.1093/jrsssa/qnae075}
 }

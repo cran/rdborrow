@@ -13,15 +13,33 @@ did_ec_ipw(
 }
 \arguments{
 \item{ps_formula}{Formula string for the propensity score model
-predicting trial participation.}
+predicting trial participation.
+The right-hand side should use only columns in
+\code{covariates_col_name}. \code{.} or any other column is an error;
+an outcome gives a warning, because adjusting for an outcome measured
+after randomization can bias the treatment effect.}
 
 \item{trt_formula}{Formula string for the treatment assignment model,
-or \code{NULL} (default) for marginal probability.}
+or \code{NULL} (default) for the marginal probability of treatment in
+the trial. The model is fit on trial patients only, and its predicted
+probabilities set the inverse-probability weights of trial treated and
+trial control patients. The left-hand side is replaced by the treatment
+column, so it can be any name.
+The right-hand side should use only columns in
+\code{covariates_col_name}. \code{.} or any other column is an error;
+an outcome gives a warning, because adjusting for an outcome measured
+after randomization can bias the treatment effect.}
 
-\item{bootstrap}{Number of bootstrap replicates (required for DID
-methods). Defaults to 500.}
+\item{bootstrap}{Number of bootstrap replicates, at least 2 (required for DID
+methods). Defaults to 500.
+Use about 1000 or more for reported intervals; small values are for
+quick checks only, and their interval can exclude the point estimate.}
 
-\item{bootstrap_ci_type}{Bootstrap CI type. Defaults to \code{"perc"}.}
+\item{bootstrap_ci_type}{Bootstrap CI type: one of \code{"perc"}
+(default), \code{"bca"}, \code{"norm"}, or \code{"basic"}.
+\code{"bca"} is slow when \code{bootstrap} is smaller than the number
+of patients: \code{boot::boot.ci()} then refits the estimator once for
+each patient.}
 }
 \value{
 An S4 object of class \code{did_ec_ipw_method}.

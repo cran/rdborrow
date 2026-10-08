@@ -25,11 +25,29 @@ NULL
 #'
 #' @param ps_formula Formula string for the propensity score model
 #'   predicting trial participation.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
 #' @param trt_formula Formula string for the treatment assignment model,
-#'   or \code{NULL} (default) for marginal probability.
-#' @param bootstrap Number of bootstrap replicates (required for DID
+#'   or \code{NULL} (default) for the marginal probability of treatment in
+#'   the trial. The model is fit on trial patients only, and its predicted
+#'   probabilities set the inverse-probability weights of trial treated and
+#'   trial control patients. The left-hand side is replaced by the treatment
+#'   column, so it can be any name.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
+#' @param bootstrap Number of bootstrap replicates, at least 2 (required for DID
 #'   methods). Defaults to 500.
-#' @param bootstrap_ci_type Bootstrap CI type. Defaults to \code{"perc"}.
+#'   Use about 1000 or more for reported intervals; small values are for
+#'   quick checks only, and their interval can exclude the point estimate.
+#' @param bootstrap_ci_type Bootstrap CI type: one of \code{"perc"}
+#'   (default), \code{"bca"}, \code{"norm"}, or \code{"basic"}.
+#'   \code{"bca"} is slow when \code{bootstrap} is smaller than the number
+#'   of patients: \code{boot::boot.ci()} then refits the estimator once for
+#'   each patient.
 #'
 #' @return An S4 object of class \code{did_ec_ipw_method}.
 #'
@@ -53,7 +71,7 @@ did_ec_ipw <- function(ps_formula,
                        bootstrap_ci_type = NULL) {
   checkmate::assert_string(ps_formula)
   checkmate::assert_string(trt_formula, null.ok = TRUE)
-  checkmate::assert_count(bootstrap, positive = TRUE)
+  checkmate::assert_int(bootstrap, lower = 2)
 
   if (is.null(bootstrap_ci_type)) {
     bootstrap_ci_type <- "perc"
@@ -77,23 +95,27 @@ setMethod("estimate", "did_ec_ipw_method", function(method, data, outcomes,
                                                     covariates, alpha = 0.05,
                                                     quiet = TRUE,
                                                     T_cross) {
+  .check_alpha(alpha)
+  T_cross <- .check_T_cross(T_cross, outcomes)
   df <- .build_analysis_df(data, outcomes, treatment, trial_status, covariates)
   Y <- as.matrix(df[, outcomes, drop = FALSE])
   S <- df$S
   A <- df$A
 
-  ps_formula <- sub("^[^~]*~", paste0(trial_status, " ~"), method@ps_formula)
+  .check_formula_covariates(method@ps_formula, covariates, outcomes, "ps_formula")
+  .check_formula_covariates(method@trt_formula, covariates, outcomes, "trt_formula")
+  ps_formula <- sub("^[^~]*~", "S ~", method@ps_formula)
   trt_formula <- method@trt_formula
   if (!is.null(trt_formula)) {
-    trt_formula <- sub("^[^~]*~", paste0(treatment, " ~"), trt_formula)
+    trt_formula <- sub("^[^~]*~", "A ~", trt_formula)
   }
 
-  if (!quiet) cat("Running DID-EC-IPW estimator...\n")
+  if (!quiet) message("Running DID-EC-IPW estimator...")
 
   result <- .did_ec_ipw_core(df, Y, S, A, T_cross, ps_formula, trt_formula)
   tau <- result$tau
 
-  if (!quiet) cat("Running bootstrap inference...\n")
+  if (!quiet) message("Running bootstrap inference...")
 
   n_ole <- ncol(Y) - T_cross
   boot_res <- .run_bootstrap(
@@ -106,13 +128,14 @@ setMethod("estimate", "did_ec_ipw_method", function(method, data, outcomes,
 
   data.frame(
     point_estimates = tau,
+    standard_deviation = boot_res$sd_boot,
     lower_CI_boot = boot_res$lower_ci,
     upper_CI_boot = boot_res$upper_ci,
     row.names = paste0("tau", (T_cross + 1):ncol(Y))
   )
 })
 
-#' DID-EC-IPW point estimate (Zhou 2024b, Eq 4 / Appendix B).
+#' DID-EC-IPW point estimate (Zhou 2024, Eq 4 / Appendix B).
 #' @param df internal data frame.
 #' @param Y outcome matrix (N x T).
 #' @param S trial participation vector.
@@ -123,7 +146,7 @@ setMethod("estimate", "did_ec_ipw_method", function(method, data, outcomes,
 #' @return list with tau vector.
 #' @noRd
 .did_ec_ipw_core <- function(df, Y, S, A, T_cross, ps_formula, trt_formula) {
-  # see Zhou 2024b: Eq 4 (identification), Appendix B (sample estimator)
+  # see Zhou 2024: Eq 4 (identification), Appendix B (sample estimator)
 
   n <- sum(S)
   n_time <- ncol(Y)

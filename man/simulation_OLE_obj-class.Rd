@@ -13,7 +13,7 @@ Simulation for OLE study
 \describe{
 \item{\code{data_matrix_list}}{List of simulated data matrices.}
 
-\item{\code{true_effect}}{True treatment effect for evaluating estimator performance.}
+\item{\code{true_effect}}{True treatment effect at the final visit.}
 
 \item{\code{T_cross}}{Numeric crossover time point for the OLE phase.}
 }}

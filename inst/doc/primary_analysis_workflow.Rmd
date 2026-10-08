@@ -17,7 +17,7 @@ library(rdborrow)
 
 This vignette demonstrates the primary analysis workflow using the
 EC-IPW and EC-AIPW weighting estimators proposed in
-[Zhou et al. (2024)](https://doi.org/10.1093/jrsssa/qnae075)
+[Zhou et al. (2025)](https://doi.org/10.1093/jrsssa/qnae075)
 for incorporating external controls in randomized trials with
 longitudinal outcomes.
 
@@ -80,6 +80,7 @@ analysis <- setup_analysis_primary(
   method_weighting_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 ```
 
@@ -90,6 +91,12 @@ making it doubly robust: consistent if either the propensity score model
 or the outcome model is correctly specified.
 
 #### 3.1 No borrowing (weight = 0)
+
+With `weight = 0`, external controls get no weight in the control mean, but
+EC-AIPW still fits its outcome model on all controls, trial and external.
+The estimate remains valid by randomization; the external data affect only
+its precision.
+
 ```{r}
 method <- ec_aipw(
   ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
@@ -155,6 +162,7 @@ analysis <- setup_analysis_primary(
   method_weighting_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 ```
 
@@ -164,5 +172,5 @@ run_analysis(analysis)
 
 ## References
 
-- Zhou X, Zhu J, Drake C, Pang H (2024). "Causal estimators for incorporating external controls in randomized trials with longitudinal outcomes." *Journal of the Royal Statistical Society Series A: Statistics in Society*. doi: [10.1093/jrsssa/qnae075](https://doi.org/10.1093/jrsssa/qnae075).
+- Zhou X, Zhu J, Drake C, Pang H (2025). "Causal estimators for incorporating external controls in randomized trials with longitudinal outcomes." *Journal of the Royal Statistical Society Series A: Statistics in Society*. doi: [10.1093/jrsssa/qnae075](https://doi.org/10.1093/jrsssa/qnae075).
 - Shi L, Pang H, Chen C, Zhu J (2025). "rdborrow: an R package for causal inference incorporating external controls in randomized controlled trials with longitudinal outcomes." *Journal of Biopharmaceutical Statistics*, 35(6), 1043-1066. doi: [10.1080/10543406.2025.2489283](https://doi.org/10.1080/10543406.2025.2489283).

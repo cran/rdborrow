@@ -21,6 +21,7 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 
 ## ----message=FALSE, warning=FALSE---------------------------------------------
@@ -48,6 +49,7 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 
 ## ----message=FALSE, warning=FALSE---------------------------------------------
@@ -75,9 +77,10 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 
-## ----message=FALSE, warning=FALSE---------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 method <- scm(
   lambda_min = 0,
   lambda_max = 1e-3,
@@ -96,5 +99,6 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 

@@ -1,6 +1,5 @@
-tol <- 1e-6
-
 test_that("SCM point estimates and bootstrap CIs", {
+  tol <- 1e-6
   skip_on_cran()
 
   method <- scm(

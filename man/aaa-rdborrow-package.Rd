@@ -28,8 +28,13 @@ Useful links:
 
 - GitHub Repo for rdborrow: \url{https://github.com/Genentech/rdborrow}
 
+- Causal estimators for incorporating external controls in randomized
+  trials with longitudinal outcomes (\code{ec_ipw()}, \code{ec_aipw()}):
+  \doi{10.1093/jrsssa/qnae075}
+
 - Estimating treatment effect in randomized trial after control to
-  treatment crossover using external controls:
+  treatment crossover using external controls (\code{did_ec_ipw()},
+  \code{did_ec_aipw()}, \code{did_ec_or()}, \code{scm()}):
   \doi{10.1080/10543406.2024.2330209}
 
 - Shi L, Pang H, Chen C, Zhu J. rdborrow: an R package for causal

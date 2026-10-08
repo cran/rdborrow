@@ -12,7 +12,7 @@
 
 <meta name="author" content="Lei Shi, Matthew Secrest" />
 
-<meta name="date" content="2026-09-28" />
+<meta name="date" content="2026-10-08" />
 
 <title>Simulation Workflow for Primary Analysis</title>
 
@@ -341,14 +341,14 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Simulation Workflow for Primary
 Analysis</h1>
 <h4 class="author">Lei Shi, Matthew Secrest</h4>
-<h4 class="date">2026-09-28</h4>
+<h4 class="date">2026-10-08</h4>
 
 
 
 <div id="primary-analysis" class="section level2">
 <h2>Primary analysis</h2>
 <p>This vignette demonstrates Monte Carlo simulation for evaluating the
-EC-IPW and EC-AIPW weighting estimators proposed in <a href="https://doi.org/10.1093/jrsssa/qnae075">Zhou et al. (2024)</a> for
+EC-IPW and EC-AIPW weighting estimators proposed in <a href="https://doi.org/10.1093/jrsssa/qnae075">Zhou et al. (2025)</a> for
 the primary (placebo-controlled) phase.</p>
 <div id="simulate-a-list-of-datasets-for-primary-analysis" class="section level3">
 <h3>1 Simulate a list of datasets for primary analysis</h3>
@@ -622,7 +622,7 @@ the primary (placebo-controlled) phase.</p>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="at">ps_formula =</span> <span class="st">&quot;S ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="at">outcome_formula =</span> <span class="fu">c</span>(</span>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    <span class="st">&quot;y1 ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>    <span class="st">&quot;y2 ~ x1 + x2 + x3 + x4 + x5 + y1&quot;</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>    <span class="st">&quot;y2 ~ x1 + x2 + x3 + x4 + x5&quot;</span></span>
 <span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  ),</span>
 <span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">bootstrap =</span> <span class="dv">50</span>,</span>
 <span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">bootstrap_ci_type =</span> <span class="st">&quot;perc&quot;</span></span>
@@ -639,7 +639,7 @@ the primary (placebo-controlled) phase.</p>
 <span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a>  <span class="at">ps_formula =</span> <span class="st">&quot;S ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
 <span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a>  <span class="at">outcome_formula =</span> <span class="fu">c</span>(</span>
 <span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a>    <span class="st">&quot;y1 ~ x1 + x2 + x3 + x4 + x5&quot;</span>,</span>
-<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a>    <span class="st">&quot;y2 ~ x1 + x2 + x3 + x4 + x5 + y1&quot;</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a>    <span class="st">&quot;y2 ~ x1 + x2 + x3 + x4 + x5&quot;</span></span>
 <span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a>  ),</span>
 <span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a>  <span class="at">weight =</span> <span class="dv">0</span>,</span>
 <span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a>  <span class="at">bootstrap =</span> <span class="dv">50</span>,</span>
@@ -675,20 +675,20 @@ the primary (placebo-controlled) phase.</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>simulation_report_bs</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt;                method_description         bias  variance       mse coverage</span></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; 1  IPW, optimal weight, bootstrap -0.003333374 0.5948377 0.5948488     0.95</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; 2 AIPW, optimal weight, bootstrap -0.108635705 0.2250218 0.2368236     0.95</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; 2 AIPW, optimal weight, bootstrap -0.105637948 0.2263140 0.2374734     0.95</span></span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; 3     IPW, zero weight, bootstrap  0.009894312 0.6239639 0.6240618     0.90</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 4    AIPW, zero weight, bootstrap -0.150771625 0.2366983 0.2594304     0.95</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 4    AIPW, zero weight, bootstrap -0.147679223 0.2401897 0.2619988     0.95</span></span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;   type_I_error power</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 1         0.05   0.7</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 2         0.05   0.9</span></span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 3         0.10   0.7</span></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; 4         0.05   1.0</span></span></code></pre></div>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 1         0.05  0.70</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 2         0.05  0.95</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 3         0.10  0.70</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; 4         0.05  1.00</span></span></code></pre></div>
 </div>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>
 <ul>
-<li>Zhou X, Zhu J, Drake C, Pang H (2024). “Causal estimators for
+<li>Zhou X, Zhu J, Drake C, Pang H (2025). “Causal estimators for
 incorporating external controls in randomized trials with longitudinal
 outcomes.” <em>Journal of the Royal Statistical Society Series A:
 Statistics in Society</em>. doi: <a href="https://doi.org/10.1093/jrsssa/qnae075">10.1093/jrsssa/qnae075</a>.</li>

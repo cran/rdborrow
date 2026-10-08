@@ -15,7 +15,7 @@ Simulation for primary analysis
 
 \item{\code{data_matrix_list_alt}}{List of data frames simulated under the alternative.}
 
-\item{\code{true_effect}}{Numeric vector of true treatment effects.}
+\item{\code{true_effect}}{True treatment effect at the final visit.}
 
 \item{\code{alt_effect}}{Numeric vector of alternative treatment effects.}
 }}

@@ -19,26 +19,36 @@ NULL
 #' EC-IPW method constructor
 #'
 #' Creates a method object for IPW estimation with external control
-#' borrowing (Zhou et al., 2024). Pass to \code{\link{setup_analysis_primary}}
+#' borrowing (Zhou et al., 2025). Pass to \code{\link{setup_analysis_primary}}
 #' and \code{\link{run_analysis}}.
 #'
 #' @param ps_formula Formula string for the propensity score model
 #'   predicting trial participation. The left-hand side is replaced
 #'   internally (e.g., \code{"S ~ x1 + x2 + x3"}).
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
 #' @param weight Borrowing weight. \code{NULL} (default) for data-adaptive
 #'   optimal weight, \code{0} for RCT-only, or a value in (0, 1].
-#' @param bootstrap Number of bootstrap replicates, or \code{NULL}
+#' @param bootstrap Number of bootstrap replicates (at least 2), or \code{NULL}
 #'   (default) for sandwich variance with normal CIs.
+#'   Use about 1000 or more for reported intervals; small values are for
+#'   quick checks only, and their interval can exclude the point estimate.
 #' @param bootstrap_ci_type Bootstrap CI type, or \code{NULL} (default)
 #'   which resolves to \code{"perc"} when \code{bootstrap} is set. One of
-#'   \code{"perc"}, \code{"bca"}, \code{"norm"}, or \code{"basic"}.
+#'   \code{"perc"}, \code{"bca"}, \code{"norm"}, or \code{"basic"}. Needs
+#'   \code{bootstrap}.
+#'   \code{"bca"} is slow when \code{bootstrap} is smaller than the number
+#'   of patients: \code{boot::boot.ci()} then refits the estimator once for
+#'   each patient.
 #'
 #' @return An S4 object of class \code{ec_ipw_method}.
 #'
 #' @references
-#' Zhou et al. (2024). Causal estimators for incorporating external
+#' Zhou et al. (2025). Causal estimators for incorporating external
 #' controls in randomized trials with longitudinal outcomes.
-#' \emph{JRSS-A}. \doi{10.1093/jrsssa/qnae075}
+#' \emph{JRSS-A}, 188(3), 791-818. \doi{10.1093/jrsssa/qnae075}
 #'
 #' @export
 #'
@@ -67,9 +77,16 @@ ec_ipw <- function(ps_formula,
                    bootstrap_ci_type = NULL) {
   checkmate::assert_string(ps_formula)
   checkmate::assert_number(weight, lower = 0, upper = 1, null.ok = TRUE)
-  checkmate::assert_count(bootstrap, positive = TRUE, null.ok = TRUE)
+  checkmate::assert_int(bootstrap, lower = 2, null.ok = TRUE)
 
   # bootstrap type
+  if (is.null(bootstrap) && !is.null(bootstrap_ci_type)) {
+    stop("`bootstrap_ci_type` needs `bootstrap`. Set `bootstrap` to the ",
+      "number of replicates, or leave `bootstrap_ci_type` as NULL for ",
+      "sandwich intervals.",
+      call. = FALSE
+    )
+  }
   if (!is.null(bootstrap) && is.null(bootstrap_ci_type)) {
     bootstrap_ci_type <- "perc"
   }
@@ -93,11 +110,15 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
                                                 treatment, trial_status,
                                                 covariates, alpha = 0.05,
                                                 quiet = TRUE) {
-  ps_formula <- sub("^[^~]*~", paste0(trial_status, " ~"), method@ps_formula)
-  df <- .build_analysis_df(data, outcomes, treatment, trial_status, covariates)
+  .check_alpha(alpha)
+  .check_formula_covariates(method@ps_formula, covariates, outcomes, "ps_formula")
+  ps_formula <- sub("^[^~]*~", "S ~", method@ps_formula)
+  df <- .build_analysis_df(data, outcomes, treatment, trial_status, covariates,
+    external = !isTRUE(method@weight == 0)
+  )
   n_time <- length(outcomes)
 
-  if (!quiet) cat("Running EC-IPW estimator...\n")
+  if (!quiet) message("Running EC-IPW estimator...")
 
   # point estimate + sandwich SE
   core <- .ec_ipw_core(
@@ -121,7 +142,7 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
 
   # bootstrap (optional)
   if (!is.null(method@bootstrap)) {
-    if (!quiet) cat("Running bootstrap inference...\n")
+    if (!quiet) message("Running bootstrap inference...")
     boot_res <- .run_bootstrap(
       df = df, statistic = .ec_ipw_boot_statistic,
       n_estimates = n_time, bootstrap = method@bootstrap,
@@ -154,7 +175,7 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
 #' @return list with tau, borrow_weight, and model intermediates.
 #' @noRd
 .ec_ipw_core <- function(df, Y, S, A, ps_formula, weight) {
-  # see Zhou 2024a: Def 1 (Eq 6) for point estimate, Eq 11 for optimal weight
+  # see Zhou 2025: Def 1 (Eq 6) for point estimate, Eq 11 for optimal weight
 
   n <- sum(S)
   pi_A <- sum(A[S == 1]) / n
@@ -212,7 +233,9 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
 #' @return list with tau and sd_tau.
 #' @noRd
 .ec_ipw_se <- function(df, core, n_time) {
-  # see Zhou 2024a: Theorem 3 (Eq 12 for A/B matrices, Eq 13 for variance)
+  # see Zhou 2025: Theorem 3 (Eq 12 for A/B matrices). the variance of tau is
+  # c' Sigma c by the delta method, which includes the covariances between
+  # mu11, mu10 and mu00. the printed Eq 13 leaves these out; do not follow it.
 
   Y <- as.matrix(df[, seq_len(n_time), drop = FALSE])
   S <- df$S
@@ -234,14 +257,16 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
 
   # w>0: full sandwich with PS model blocks
   pi_S <- n / N
+  # drop columns that glm() aliased (coefficient NA), as the fit itself does
   X_model <- model.matrix(core$ps_model)
+  X_model <- X_model[, !is.na(coef(core$ps_model)), drop = FALSE]
   n_ps <- ncol(X_model)
 
   # bread: A matrix blocks (Eq 12)
   A33 <- diag(rep(-mean((1 - S) * core$w00 / (1 - pi_S)), n_time), nrow = n_time)
   A34 <- t((1 - S) * core$w00 / (1 - pi_S) *
     sweep(Y, 2, core$mu00)) %*% X_model / N
-  A44 <- t(X_model) %*% diag(-core$pi_SX * (1 - core$pi_SX)) %*% X_model / N
+  A44 <- crossprod(X_model * (-core$pi_SX * (1 - core$pi_SX)), X_model) / N
 
   block_dim <- 3 * n_time + n_ps
   A_mat <- matrix(0, nrow = block_dim, ncol = block_dim)
@@ -258,11 +283,12 @@ setMethod("estimate", "ec_ipw_method", function(method, data, outcomes,
   phi_ps <- (S - core$pi_SX) * X_model
   B <- crossprod(cbind(phi1, phi2, phi3, phi_ps)) / N
 
-  # sandwich: Sigma = A^{-1} B A^{-T} (Eq 13)
+  # sandwich: Sigma = A^{-1} B A^{-T} (Theorem 3)
   A_inv <- solve(A_mat)
   sigma <- A_inv %*% B %*% t(A_inv)
 
-  # tau = mu1 - (1-w)*mu10 - w*mu00, extract variance via linear combination
+  # tau = mu1 - (1-w)*mu10 - w*mu00, so var(tau) = c' Sigma c with the full
+  # Sigma, including the cross-covariances
   coef_mat <- cbind(
     diag(n_time),
     -(1 - core$borrow_weight) * diag(n_time),

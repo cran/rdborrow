@@ -55,6 +55,7 @@ simulate_outcome_from_model <- function(X, A, outcome_model_specs, OLE_flag, T_c
   checkmate::assert_list(outcome_model_specs, min.len = 1)
   checkmate::assert_flag(OLE_flag)
   checkmate::assert_count(T_cross, positive = TRUE)
+  T_cross <- round(T_cross)
 
   n <- nrow(X)
   T_follow <- length(outcome_model_specs)

@@ -1,6 +1,5 @@
-tol <- 1e-6
-
 test_that("DID-EC-AIPW point estimates and bootstrap CIs", {
+  tol <- 1e-6
   method <- did_ec_aipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     trt_formula = "A ~ x1 + x2 + x3 + x4 + x5",
@@ -36,6 +35,7 @@ test_that("DID-EC-AIPW point estimates and bootstrap CIs", {
 })
 
 test_that("DID-EC-AIPW marginal treatment model (default trt_formula)", {
+  tol <- 1e-6
   method <- did_ec_aipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
     outcome_formula = c(
@@ -66,6 +66,7 @@ test_that("DID-EC-AIPW marginal treatment model (default trt_formula)", {
 })
 
 test_that("DID-EC-AIPW marginal model matches an intercept-only treatment model", {
+  tol <- 1e-6
   covs <- c("x1", "x2", "x3", "x4", "x5")
   outcomes <- c("y1", "y2", "y3", "y4")
   df <- .build_analysis_df(SyntheticData, outcomes, "A", "S", covs)

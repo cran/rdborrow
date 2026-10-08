@@ -24,10 +24,27 @@
 #'   \code{\link{setup_analysis_primary}} or \code{\link{setup_analysis_OLE}}.
 #' @param quiet Logical. If \code{TRUE}, suppress printed output.
 #'
-#' @return For primary methods, a list with \code{results} (data frame of
-#'   point estimates, standard errors, and confidence intervals) and
-#'   \code{borrow_weight}. For OLE methods, a data frame of point estimates
-#'   and bootstrap confidence intervals.
+#' @return For primary methods (\code{ec_ipw()}, \code{ec_aipw()}), a list
+#'   with:
+#'   \describe{
+#'     \item{\code{results}}{A data frame with one row for each outcome, named
+#'       \code{tau1}, \code{tau2}, and so on, in the order of
+#'       \code{outcome_col_name}. The columns are \code{point_estimates},
+#'       \code{standard_deviation}, and either \code{lower_CI_normal} and
+#'       \code{upper_CI_normal} (sandwich variance, when \code{bootstrap} is
+#'       \code{NULL}) or \code{lower_CI_boot} and \code{upper_CI_boot}.
+#'       \code{standard_deviation} is the sandwich standard error, or the
+#'       standard deviation of the bootstrap replicates.}
+#'     \item{\code{borrow_weight}}{The borrowing weight that was used.}
+#'   }
+#'   For OLE methods (\code{did_ec_ipw()}, \code{did_ec_aipw()},
+#'   \code{did_ec_or()}, \code{scm()}), a data frame with one row for each
+#'   open-label visit and the columns \code{point_estimates},
+#'   \code{standard_deviation} (of the bootstrap replicates),
+#'   \code{lower_CI_boot}, and \code{upper_CI_boot}. The rows are named
+#'   \code{tau<k>} for \code{k} from \code{T_cross + 1} to the number of
+#'   outcomes, where \code{k} is the position of the outcome in
+#'   \code{outcome_col_name}. List the outcomes in visit order.
 #'
 #' @seealso \code{\link{run_simulation}} for evaluating operating
 #'   characteristics via Monte Carlo simulation.
@@ -46,6 +63,8 @@
 #' )
 #' run_analysis(analysis)
 run_analysis <- function(analysis_obj, quiet = TRUE) {
+  checkmate::assert_class(analysis_obj, "analysis_obj")
+  checkmate::assert_flag(quiet)
   method <- analysis_obj@method_obj
 
   args <- list(

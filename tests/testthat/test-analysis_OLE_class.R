@@ -81,6 +81,19 @@ test_that("setup_analysis_OLE validates T_cross", {
   ), "T_cross must be less than")
 })
 
+test_that("setup_analysis_OLE rounds a T_cross that is an integer up to floating point", {
+  obj <- setup_analysis_OLE(
+    data = SyntheticData,
+    trial_status_col_name = "S",
+    treatment_col_name = "A",
+    outcome_col_name = c("y1", "y2", "y3", "y4"),
+    covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
+    method_OLE_obj = did_ec_ipw("S ~ x1", bootstrap = 2),
+    T_cross = 0.6 / 0.2
+  )
+  expect_identical(obj@T_cross, 3)
+})
+
 test_that("show method prints without error", {
   method <- did_ec_ipw(
     ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",

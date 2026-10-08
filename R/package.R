@@ -6,7 +6,9 @@
 #' @importFrom CVXR Variable Minimize Problem
 #' @import progress
 #' @importFrom methods is new
-#' @importFrom stats as.formula glm lm model.matrix predict qnorm rbinom rmultinom var
+#' @importFrom stats as.formula coef delete.response glm lm model.frame
+#'   model.matrix predict qnorm rbinom terms
+#'   rmultinom var
 #' @importFrom utils data
 #' @importFrom Matrix bdiag
 NULL

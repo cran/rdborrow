@@ -12,7 +12,7 @@
 
 <meta name="author" content="Matthew Secrest" />
 
-<meta name="date" content="2026-09-28" />
+<meta name="date" content="2026-10-08" />
 
 <title>Introduction to rdborrow</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Introduction to rdborrow</h1>
 <h4 class="author">Matthew Secrest</h4>
-<h4 class="date">2026-09-28</h4>
+<h4 class="date">2026-10-08</h4>
 
 
 
@@ -380,21 +380,23 @@ placebo-controlled phase by borrowing from external controls.</p>
 <tr class="odd">
 <td>EC-IPW</td>
 <td><code>ec_ipw()</code></td>
-<td>Zhou et al. (2024b)</td>
+<td>Zhou et al. (2025)</td>
 <td>Inverse probability weighting with external control borrowing</td>
 </tr>
 <tr class="even">
 <td>EC-AIPW</td>
 <td><code>ec_aipw()</code></td>
-<td>Zhou et al. (2024b)</td>
+<td>Zhou et al. (2025)</td>
 <td>Augmented IPW (doubly robust)</td>
 </tr>
 </tbody>
 </table>
 <p>Both methods support:</p>
 <ul>
-<li><strong>No borrowing</strong> (<code>weight = 0</code>): uses only
-RCT data</li>
+<li><strong>No borrowing</strong> (<code>weight = 0</code>): gives
+external controls no weight. EC-IPW then uses only RCT data. EC-AIPW
+still fits its outcome model on all controls, so external data affect
+its precision, though not its validity</li>
 <li><strong>Optimal weight</strong> (<code>weight = NULL</code>):
 data-adaptive weight minimizing variance</li>
 <li><strong>Fixed weight</strong> (<code>weight = 0.3</code>):
@@ -428,25 +430,25 @@ external controls who remain untreated.</p>
 <tr class="odd">
 <td>DID-EC-IPW</td>
 <td><code>did_ec_ipw()</code></td>
-<td>Zhou et al. (2024a)</td>
+<td>Zhou et al. (2024)</td>
 <td>Difference-in-differences with IPW</td>
 </tr>
 <tr class="even">
 <td>DID-EC-AIPW</td>
 <td><code>did_ec_aipw()</code></td>
-<td>Zhou et al. (2024a)</td>
+<td>Zhou et al. (2024)</td>
 <td>DID with augmented IPW</td>
 </tr>
 <tr class="odd">
 <td>DID-EC-OR</td>
 <td><code>did_ec_or()</code></td>
-<td>Zhou et al. (2024a)</td>
+<td>Zhou et al. (2024)</td>
 <td>DID with outcome regression</td>
 </tr>
 <tr class="even">
 <td>SCM</td>
 <td><code>scm()</code></td>
-<td>Zhou et al. (2024a)</td>
+<td>Zhou et al. (2024)</td>
 <td>Synthetic control method</td>
 </tr>
 </tbody>
@@ -507,7 +509,7 @@ their documentation:</p>
 <div id="references" class="section level2">
 <h2>References</h2>
 <ul>
-<li>Zhou X, Zhu J, Drake C, Pang H (2024). “Causal estimators for
+<li>Zhou X, Zhu J, Drake C, Pang H (2025). “Causal estimators for
 incorporating external controls in randomized trials with longitudinal
 outcomes.” <em>Journal of the Royal Statistical Society Series A:
 Statistics in Society</em>. doi: <a href="https://doi.org/10.1093/jrsssa/qnae075">10.1093/jrsssa/qnae075</a>.</li>

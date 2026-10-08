@@ -34,12 +34,12 @@ placebo-controlled phase by borrowing from external controls.
 
 | Method | Function | Reference | Description |
 |--------|----------|-----------|-------------|
-| EC-IPW | `ec_ipw()` | Zhou et al. (2024b) | Inverse probability weighting with external control borrowing |
-| EC-AIPW | `ec_aipw()` | Zhou et al. (2024b) | Augmented IPW (doubly robust) |
+| EC-IPW | `ec_ipw()` | Zhou et al. (2025) | Inverse probability weighting with external control borrowing |
+| EC-AIPW | `ec_aipw()` | Zhou et al. (2025) | Augmented IPW (doubly robust) |
 
 Both methods support:
 
-- **No borrowing** (`weight = 0`): uses only RCT data
+- **No borrowing** (`weight = 0`): gives external controls no weight. EC-IPW then uses only RCT data. EC-AIPW still fits its outcome model on all controls, so external data affect its precision, though not its validity
 - **Optimal weight** (`weight = NULL`): data-adaptive weight minimizing variance
 - **Fixed weight** (`weight = 0.3`): user-specified borrowing amount
 - **Sandwich variance** or **bootstrap inference**
@@ -54,10 +54,10 @@ external controls who remain untreated.
 
 | Method | Function | Reference | Description |
 |--------|----------|-----------|-------------|
-| DID-EC-IPW | `did_ec_ipw()` | Zhou et al. (2024a) | Difference-in-differences with IPW |
-| DID-EC-AIPW | `did_ec_aipw()` | Zhou et al. (2024a) | DID with augmented IPW |
-| DID-EC-OR | `did_ec_or()` | Zhou et al. (2024a) | DID with outcome regression |
-| SCM | `scm()` | Zhou et al. (2024a) | Synthetic control method |
+| DID-EC-IPW | `did_ec_ipw()` | Zhou et al. (2024) | Difference-in-differences with IPW |
+| DID-EC-AIPW | `did_ec_aipw()` | Zhou et al. (2024) | DID with augmented IPW |
+| DID-EC-OR | `did_ec_or()` | Zhou et al. (2024) | DID with outcome regression |
+| SCM | `scm()` | Zhou et al. (2024) | Synthetic control method |
 
 All OLE methods use bootstrap for inference.
 
@@ -107,6 +107,6 @@ results
 
 ## References
 
-- Zhou X, Zhu J, Drake C, Pang H (2024). "Causal estimators for incorporating external controls in randomized trials with longitudinal outcomes." *Journal of the Royal Statistical Society Series A: Statistics in Society*. doi: [10.1093/jrsssa/qnae075](https://doi.org/10.1093/jrsssa/qnae075).
+- Zhou X, Zhu J, Drake C, Pang H (2025). "Causal estimators for incorporating external controls in randomized trials with longitudinal outcomes." *Journal of the Royal Statistical Society Series A: Statistics in Society*. doi: [10.1093/jrsssa/qnae075](https://doi.org/10.1093/jrsssa/qnae075).
 - Zhou X, Pang H, Drake C, Burger HU, Zhu J (2024). "Estimating treatment effect in randomized trial after control to treatment crossover using external controls." *Journal of Biopharmaceutical Statistics*. doi: [10.1080/10543406.2024.2330209](https://doi.org/10.1080/10543406.2024.2330209).
 - Shi L, Pang H, Chen C, Zhu J (2025). "rdborrow: an R package for causal inference incorporating external controls in randomized controlled trials with longitudinal outcomes." *Journal of Biopharmaceutical Statistics*, 35(6), 1043-1066. doi: [10.1080/10543406.2025.2489283](https://doi.org/10.1080/10543406.2025.2489283).

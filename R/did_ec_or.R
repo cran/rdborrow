@@ -28,13 +28,28 @@ NULL
 #' Uses outcome models only (no propensity score model).
 #'
 #' @param outcome_formula_ext Character vector of outcome model formulas
-#'   for external controls, one per time point.
+#'   for external controls, one per outcome.
 #' @param outcome_formula_rct_ctrl Character vector of outcome model
-#'   formulas for RCT control subjects, one per time point.
+#'   formulas for RCT control subjects, one per outcome.
 #' @param outcome_formula_rct_trt Character vector of outcome model
-#'   formulas for RCT treated subjects, one per time point.
-#' @param bootstrap Number of bootstrap replicates. Defaults to 500.
-#' @param bootstrap_ci_type Bootstrap CI type. Defaults to \code{"perc"}.
+#'   formulas for RCT treated subjects, one per outcome. In all three
+#'   arguments, each formula is matched to an outcome by its left-hand side,
+#'   so the order does not matter. The left-hand side must be the outcome
+#'   name itself; to model a transformed outcome, transform the column
+#'   first.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
+#' @param bootstrap Number of bootstrap replicates (at least 2).
+#'   Defaults to 500.
+#'   Use about 1000 or more for reported intervals; small values are for
+#'   quick checks only, and their interval can exclude the point estimate.
+#' @param bootstrap_ci_type Bootstrap CI type: one of \code{"perc"}
+#'   (default), \code{"bca"}, \code{"norm"}, or \code{"basic"}.
+#'   \code{"bca"} is slow when \code{bootstrap} is smaller than the number
+#'   of patients: \code{boot::boot.ci()} then refits the estimator once for
+#'   each patient.
 #'
 #' @return An S4 object of class \code{did_ec_or_method}.
 #'
@@ -67,7 +82,7 @@ did_ec_or <- function(outcome_formula_ext,
   checkmate::assert_character(outcome_formula_ext, min.len = 1)
   checkmate::assert_character(outcome_formula_rct_ctrl, min.len = 1)
   checkmate::assert_character(outcome_formula_rct_trt, min.len = 1)
-  checkmate::assert_count(bootstrap, positive = TRUE)
+  checkmate::assert_int(bootstrap, lower = 2)
 
   if (is.null(bootstrap_ci_type)) {
     bootstrap_ci_type <- "perc"
@@ -94,21 +109,37 @@ setMethod("estimate", "did_ec_or_method", function(method, data, outcomes,
                                                    covariates, alpha = 0.05,
                                                    quiet = TRUE,
                                                    T_cross) {
+  .check_alpha(alpha)
+  T_cross <- .check_T_cross(T_cross, outcomes)
   df <- .build_analysis_df(data, outcomes, treatment, trial_status, covariates)
   S <- df$S
   A <- df$A
 
-  if (!quiet) cat("Running DID-EC-OR estimator...\n")
-
-  result <- .did_ec_or_core(
-    df, S, A, T_cross,
-    method@outcome_formula_ext,
-    method@outcome_formula_rct_ctrl,
-    method@outcome_formula_rct_trt
+  .check_formula_covariates(
+    method@outcome_formula_ext, covariates, outcomes, "outcome_formula_ext"
   )
+  .check_formula_covariates(
+    method@outcome_formula_rct_ctrl, covariates, outcomes, "outcome_formula_rct_ctrl"
+  )
+  .check_formula_covariates(
+    method@outcome_formula_rct_trt, covariates, outcomes, "outcome_formula_rct_trt"
+  )
+  f_ext <- .match_outcome_formulas(
+    method@outcome_formula_ext, outcomes, "outcome_formula_ext"
+  )
+  f_ctrl <- .match_outcome_formulas(
+    method@outcome_formula_rct_ctrl, outcomes, "outcome_formula_rct_ctrl"
+  )
+  f_trt <- .match_outcome_formulas(
+    method@outcome_formula_rct_trt, outcomes, "outcome_formula_rct_trt"
+  )
+
+  if (!quiet) message("Running DID-EC-OR estimator...")
+
+  result <- .did_ec_or_core(df, S, A, T_cross, f_ext, f_ctrl, f_trt)
   tau <- result$tau
 
-  if (!quiet) cat("Running bootstrap inference...\n")
+  if (!quiet) message("Running bootstrap inference...")
 
   n_ole <- length(outcomes) - T_cross
   boot_res <- .run_bootstrap(
@@ -116,14 +147,15 @@ setMethod("estimate", "did_ec_or_method", function(method, data, outcomes,
     n_estimates = n_ole, bootstrap = method@bootstrap,
     bootstrap_ci_type = method@bootstrap_ci_type, alpha = alpha,
     outcomes = outcomes,
-    outcome_formula_ext = method@outcome_formula_ext,
-    outcome_formula_rct_ctrl = method@outcome_formula_rct_ctrl,
-    outcome_formula_rct_trt = method@outcome_formula_rct_trt,
+    outcome_formula_ext = f_ext,
+    outcome_formula_rct_ctrl = f_ctrl,
+    outcome_formula_rct_trt = f_trt,
     T_cross = T_cross
   )
 
   data.frame(
     point_estimates = tau,
+    standard_deviation = boot_res$sd_boot,
     lower_CI_boot = boot_res$lower_ci,
     upper_CI_boot = boot_res$upper_ci,
     row.names = paste0("tau", (T_cross + 1):length(outcomes))
@@ -132,7 +164,7 @@ setMethod("estimate", "did_ec_or_method", function(method, data, outcomes,
 
 # internal helpers----
 
-#' DID-EC-OR point estimate (Zhou 2024b, Eq 3 / Appendix B).
+#' DID-EC-OR point estimate (Zhou 2024, Eq 3 / Appendix B).
 #' @param df internal data frame.
 #' @param S trial participation vector.
 #' @param A treatment vector.
@@ -146,7 +178,7 @@ setMethod("estimate", "did_ec_or_method", function(method, data, outcomes,
                             outcome_formula_ext,
                             outcome_formula_rct_ctrl,
                             outcome_formula_rct_trt) {
-  # see Zhou 2024b: Eq 3 (identification), Appendix B (sample estimator)
+  # see Zhou 2024: Eq 3 (identification), Appendix B (sample estimator)
 
   n <- sum(S)
   n_time <- length(outcome_formula_ext)

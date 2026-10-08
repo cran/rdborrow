@@ -253,7 +253,7 @@ method_AIPW_optimal_weight <- ec_aipw(
   ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
   outcome_formula = c(
     "y1 ~ x1 + x2 + x3 + x4 + x5",
-    "y2 ~ x1 + x2 + x3 + x4 + x5 + y1"
+    "y2 ~ x1 + x2 + x3 + x4 + x5"
   ),
   bootstrap = 50,
   bootstrap_ci_type = "perc"
@@ -270,7 +270,7 @@ method_AIPW_zero_weight <- ec_aipw(
   ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
   outcome_formula = c(
     "y1 ~ x1 + x2 + x3 + x4 + x5",
-    "y2 ~ x1 + x2 + x3 + x4 + x5 + y1"
+    "y2 ~ x1 + x2 + x3 + x4 + x5"
   ),
   weight = 0,
   bootstrap = 50,

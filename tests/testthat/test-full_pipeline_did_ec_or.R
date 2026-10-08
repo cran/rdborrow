@@ -1,6 +1,5 @@
-tol <- 1e-6
-
 test_that("DID-EC-OR point estimates and bootstrap CIs", {
+  tol <- 1e-6
   model_forms <- c(
     "y1 ~ x1 + x2 + x3 + x4 + x5",
     "y2 ~ x1 + x2 + x3 + x4 + x5",

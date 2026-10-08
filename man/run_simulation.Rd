@@ -48,7 +48,7 @@ sim <- setup_simulation_primary(
   outcome_col_name = c("y1", "y2"),
   covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
   method_obj_list = list(method),
-  true_effect = c(0, 0),
+  true_effect = 0,
   method_description = "IPW"
 )
 run_simulation(sim)

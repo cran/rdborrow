@@ -34,6 +34,8 @@
 #' )
 simulate_trial <- function(X_int, X_ext, num_treated, OLE_flag, T_cross, outcome_model_specs) {
   # TODO: sanity check for dimension of num_treated, T_cross, outcome_model_specs
+  checkmate::assert_count(T_cross, positive = TRUE)
+  T_cross <- round(T_cross)
 
   # ===== calculate population quantites =====
   n_int <- nrow(X_int)

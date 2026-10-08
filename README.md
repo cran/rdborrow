@@ -44,14 +44,14 @@ Shi L, Pang H, Chen C, Zhu J. rdborrow: an R package for causal inference incorp
 
 ## How to cite the package
 
-Shi L, Secrest MH, Pang H, Chen C, Zhu J (2026). rdborrow: An R package for Causal Inference Incorporating External Controls in Randomized Trials with Longitudinal Outcomes. R package version 0.0.4.0, https://genentech.github.io/rdborrow/.
+Shi L, Secrest MH, Pang H, Chen C, Zhu J (2026). rdborrow: An R package for Causal Inference Incorporating External Controls in Randomized Trials with Longitudinal Outcomes. R package version 0.0.5.0, https://genentech.github.io/rdborrow/.
 
 ```
 @Manual{,
   title = {rdborrow: An R package for Causal Inference Incorporating External Controls in Randomized Trials with Longitudinal Outcomes},
   author = {Lei Shi and Matthew H Secrest and Herbert Pang and Chen Chen and Jiawen Zhu},
   year = {2026},
-  note = {R package version 0.0.4.0},
+  note = {R package version 0.0.5.0},
   url = {https://genentech.github.io/rdborrow/}
 }
 ```

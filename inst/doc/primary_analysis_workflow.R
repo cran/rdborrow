@@ -51,6 +51,7 @@ analysis <- setup_analysis_primary(
   method_weighting_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 
 ## -----------------------------------------------------------------------------
@@ -114,5 +115,6 @@ analysis <- setup_analysis_primary(
   method_weighting_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 

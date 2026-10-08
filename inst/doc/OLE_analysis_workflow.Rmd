@@ -53,6 +53,7 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 ```
 
@@ -82,6 +83,7 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 ```
 
@@ -111,12 +113,21 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 ```
 
 
 ### 2 Synthetic control method
-```{r message=FALSE, warning=FALSE}
+
+`scm()` solves one optimization for each trial control patient in each
+bootstrap replicate, so it is slow. This example uses only 3 replicates so
+that the vignette builds quickly. Its interval is for demonstration only:
+`boot` warns that it uses the extreme replicates, and it can even exclude the
+point estimate. A real analysis needs many more replicates, for example
+`bootstrap = 1000`.
+
+```{r message=FALSE}
 method <- scm(
   lambda_min = 0,
   lambda_max = 1e-3,
@@ -135,6 +146,7 @@ analysis <- setup_analysis_OLE(
   method_OLE_obj = method
 )
 
+set.seed(1)
 run_analysis(analysis)
 ```
 

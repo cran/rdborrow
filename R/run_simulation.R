@@ -41,7 +41,7 @@
 #'   outcome_col_name = c("y1", "y2"),
 #'   covariates_col_name = c("x1", "x2", "x3", "x4", "x5"),
 #'   method_obj_list = list(method),
-#'   true_effect = c(0, 0),
+#'   true_effect = 0,
 #'   method_description = "IPW"
 #' )
 #' run_simulation(sim)
@@ -73,7 +73,7 @@ run_simulation <- function(simulation_obj, quiet = TRUE) {
       niter <- length(data_matrix_list_null)
       for (iter in 1:niter) {
         if (!quiet) {
-          cat("Null: ", "| method setting: ", md_iter, "| data setting: ", iter, "\n")
+          message("Null: ", "| method setting: ", md_iter, "| data setting: ", iter)
         }
         # create a primary analysis object
         analysis_primary_obj <- setup_analysis_primary(
@@ -91,7 +91,7 @@ run_simulation <- function(simulation_obj, quiet = TRUE) {
 
         # only focus on the last time point
         # print(nrow(res$results))
-        record_df <- rbind(record_df, res$results[nrow(res$results), ])
+        record_df <- rbind(record_df, res$results[nrow(res$results), , drop = FALSE])
       }
       record[[md_iter]] <- record_df
     }
@@ -127,7 +127,7 @@ run_simulation <- function(simulation_obj, quiet = TRUE) {
         record_df_alt <- data.frame()
         for (iter in 1:niter) {
           if (!quiet) {
-            cat("Alternative: ", "| method setting: ", md_iter, "| data setting: ", iter, "\n")
+            message("Alternative: ", "| method setting: ", md_iter, "| data setting: ", iter)
           }
           # create a primary analysis object
           analysis_primary_obj <- setup_analysis_primary(
@@ -145,7 +145,7 @@ run_simulation <- function(simulation_obj, quiet = TRUE) {
 
           # only focus on the last time point
           # print(nrow(res$results))
-          record_df_alt <- rbind(record_df_alt, res$results[nrow(res$results), ])
+          record_df_alt <- rbind(record_df_alt, res$results[nrow(res$results), , drop = FALSE])
         }
         record_alt[[md_iter]] <- record_df_alt
       }
@@ -179,7 +179,7 @@ run_simulation <- function(simulation_obj, quiet = TRUE) {
       record_df <- data.frame()
       for (iter in 1:niter) {
         if (!quiet) {
-          cat("Null: ", "| method setting: ", md_iter, "| data setting: ", iter, "\n")
+          message("Null: ", "| method setting: ", md_iter, "| data setting: ", iter)
         }
         T_cross <- simulation_obj@T_cross
         # create a primary analysis object
@@ -199,7 +199,7 @@ run_simulation <- function(simulation_obj, quiet = TRUE) {
         rownames(res)[nrow(res)] <- ""
 
         # only focus on the last time point
-        record_df <- rbind(record_df, res[nrow(res), ])
+        record_df <- rbind(record_df, res[nrow(res), , drop = FALSE])
       }
       record[[md_iter]] <- record_df
     }

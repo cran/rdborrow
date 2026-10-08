@@ -12,7 +12,7 @@
 
 <meta name="author" content="Lei Shi, Matthew Secrest" />
 
-<meta name="date" content="2026-09-28" />
+<meta name="date" content="2026-10-08" />
 
 <title>OLE Analysis Workflow</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">OLE Analysis Workflow</h1>
 <h4 class="author">Lei Shi, Matthew Secrest</h4>
-<h4 class="date">2026-09-28</h4>
+<h4 class="date">2026-10-08</h4>
 
 
 
@@ -386,10 +386,11 @@ in <code>outcome_col_name</code>.</p>
 <span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="at">method_OLE_obj =</span> method</span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>)</span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a></span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
-<pre><code>##      point_estimates lower_CI_boot upper_CI_boot
-## tau3        2.075926   -0.08256729      4.539262
-## tau4        4.389438    0.87198533      7.915634</code></pre>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
+<pre><code>##      point_estimates standard_deviation lower_CI_boot upper_CI_boot
+## tau3        2.075926           1.075571    -0.5383522      4.529989
+## tau4        4.389438           1.508449     0.7651932      8.041151</code></pre>
 </div>
 <div id="did-ec-aipw" class="section level4">
 <h4>1.2 DID-EC-AIPW</h4>
@@ -417,10 +418,11 @@ in <code>outcome_col_name</code>.</p>
 <span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>  <span class="at">method_OLE_obj =</span> method</span>
 <span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>)</span>
 <span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a></span>
-<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
-<pre><code>##      point_estimates lower_CI_boot upper_CI_boot
-## tau3        2.041727    -0.3654017      5.948501
-## tau4        4.036118     1.1337139      6.993150</code></pre>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
+<pre><code>##      point_estimates standard_deviation lower_CI_boot upper_CI_boot
+## tau3        2.041727           1.253924    -0.9601101      4.902500
+## tau4        4.036118           1.532951     0.9831966      7.465598</code></pre>
 </div>
 <div id="did-ec-or" class="section level4">
 <h4>1.3 DID-EC-OR</h4>
@@ -448,14 +450,22 @@ in <code>outcome_col_name</code>.</p>
 <span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>  <span class="at">method_OLE_obj =</span> method</span>
 <span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>)</span>
 <span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a></span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
-<pre><code>##      point_estimates lower_CI_boot upper_CI_boot
-## tau3        1.568947     -1.285475      3.984084
-## tau4        4.407834      2.237100      7.303871</code></pre>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
+<pre><code>##      point_estimates standard_deviation lower_CI_boot upper_CI_boot
+## tau3        1.568947          1.0759314     -1.463867      3.569813
+## tau4        4.407834          0.9722213      1.918617      6.407367</code></pre>
 </div>
 </div>
 <div id="synthetic-control-method" class="section level3">
 <h3>2 Synthetic control method</h3>
+<p><code>scm()</code> solves one optimization for each trial control
+patient in each bootstrap replicate, so it is slow. This example uses
+only 3 replicates so that the vignette builds quickly. Its interval is
+for demonstration only: <code>boot</code> warns that it uses the extreme
+replicates, and it can even exclude the point estimate. A real analysis
+needs many more replicates, for example
+<code>bootstrap = 1000</code>.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>method <span class="ot">&lt;-</span> <span class="fu">scm</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">lambda_min =</span> <span class="dv">0</span>,</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">lambda_max =</span> <span class="fl">1e-3</span>,</span>
@@ -474,10 +484,13 @@ in <code>outcome_col_name</code>.</p>
 <span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="at">method_OLE_obj =</span> method</span>
 <span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>)</span>
 <span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
-<pre><code>##      point_estimates lower_CI_boot upper_CI_boot
-## tau3        2.064756      2.553153      3.492752
-## tau4        3.943234      2.079283      4.349407</code></pre>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="fu">run_analysis</span>(analysis)</span></code></pre></div>
+<pre><code>## Warning in norm.inter(t, alpha): extreme order statistics used as endpoints
+## Warning in norm.inter(t, alpha): extreme order statistics used as endpoints</code></pre>
+<pre><code>##      point_estimates standard_deviation lower_CI_boot upper_CI_boot
+## tau3        2.064756          0.5305223      1.831022      2.854466
+## tau4        3.943234          2.1379553      1.909084      6.089916</code></pre>
 </div>
 </div>
 <div id="references" class="section level2">

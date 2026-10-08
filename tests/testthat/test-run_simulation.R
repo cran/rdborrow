@@ -109,6 +109,49 @@ test_that("run_simulation handles multiple methods", {
   expect_equal(report@method_description, c("IPW", "AIPW"))
 })
 
+test_that("run_simulation handles single-column results", {
+  setClass("one_col_primary", contains = "method_primary_obj")
+  setClass("one_col_OLE", contains = "method_OLE_obj")
+  one_col <- function(data, outcomes, ...) {
+    data.frame(point_estimates = colMeans(data[, outcomes, drop = FALSE]))
+  }
+  setMethod("estimate", "one_col_primary", function(method, data, outcomes, ...) {
+    list(results = one_col(data, outcomes), borrow_weight = 0)
+  })
+  setMethod("estimate", "one_col_OLE", function(method, data, outcomes, ...) {
+    one_col(data, outcomes)
+  })
+  primary <- setup_simulation_primary(
+    data_matrix_list_null = make_primary_sim_data(),
+    trial_status_col_name = "S",
+    treatment_col_name = "A",
+    outcome_col_name = c("y1", "y2"),
+    covariates_col_name = c("x1", "x2", "x3"),
+    method_obj_list = list(new("one_col_primary")),
+    true_effect = 0,
+    method_description = "one column"
+  )
+  OLE <- setup_simulation_OLE(
+    data_matrix_list = make_OLE_sim_data(),
+    trial_status_col_name = "S",
+    treatment_col_name = "A",
+    outcome_col_name = c("y1", "y2", "y3", "y4"),
+    covariates_col_name = c("x1", "x2", "x3"),
+    T_cross = 2,
+    method_obj_list = list(new("one_col_OLE")),
+    true_effect = 0,
+    method_description = "one column"
+  )
+
+  for (sim_obj in list(primary, OLE)) {
+    report <- run_simulation(sim_obj, quiet = TRUE)
+    expect_all_true(is.finite(c(report@bias, report@variance)))
+  }
+
+  removeMethod("estimate", "one_col_primary")
+  removeMethod("estimate", "one_col_OLE")
+})
+
 test_that("run_simulation works for OLE", {
   data_list <- make_OLE_sim_data()
   method <- did_ec_ipw(
@@ -152,7 +195,8 @@ test_that("run_simulation quiet=FALSE produces output", {
     method_description = "IPW"
   )
 
-  expect_output(run_simulation(sim_obj, quiet = FALSE), "Null:")
+  expect_message(run_simulation(sim_obj, quiet = FALSE), "Null:")
+  expect_silent(suppressMessages(run_simulation(sim_obj, quiet = FALSE)))
 })
 
 test_that("run_simulation errors on invalid object", {

@@ -30,14 +30,16 @@ setup_simulation_OLE(
 
 \item{method_obj_list}{List of method objects to evaluate.}
 
-\item{T_cross}{Numeric crossover time point.}
+\item{T_cross}{Crossover time point: a whole number of at least 1 and less
+than the number of outcomes.}
 
-\item{true_effect}{Numeric vector of true treatment effects.}
+\item{true_effect}{The true treatment effect at the final visit, a single
+number. [run_simulation()] evaluates estimates at the final visit only.}
 
 \item{method_description}{Character vector of method labels, one per method
 in `method_obj_list`.}
 
-\item{alpha}{Significance level.}
+\item{alpha}{Significance level, more than 0 and less than 1.}
 }
 \value{
 An object of class `simulation_OLE_obj`.
@@ -60,7 +62,7 @@ setup_simulation_OLE(
     )
   ),
   T_cross = 2,
-  true_effect = c(0, 0),
+  true_effect = 0,
   method_description = "IPW, DID"
 )
 }

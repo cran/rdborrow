@@ -21,26 +21,50 @@ NULL
 #' EC-AIPW method
 #'
 #' Creates a method object for augmented IPW estimation with external
-#' control borrowing (Zhou et al., 2024). Augments the IPW estimator
+#' control borrowing (Zhou et al., 2025). Augments the IPW estimator
 #' with an outcome regression model for improved efficiency. Pass to
 #' \code{\link{setup_analysis_primary}} and \code{\link{run_analysis}}.
 #'
 #' @param ps_formula Formula string for the propensity score model
 #'   predicting trial participation.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
 #' @param outcome_formula Character vector of outcome model formulas,
-#'   one per time point (e.g., \code{c("y1 ~ x1 + x2", "y2 ~ x1 + x2")}).
+#'   one per outcome (e.g., \code{c("y1 ~ x1 + x2", "y2 ~ x1 + x2")}).
+#'   Each formula is matched to an outcome by its left-hand side, so the
+#'   order does not matter. The left-hand side must be the outcome name
+#'   itself; to model a transformed outcome, transform the column first.
+#'   The right-hand side should use only columns in
+#'   \code{covariates_col_name}. \code{.} or any other column is an error;
+#'   an outcome gives a warning, because adjusting for an outcome measured
+#'   after randomization can bias the treatment effect.
 #' @param weight Borrowing weight. \code{NULL} (default) for data-adaptive
-#'   optimal weight, \code{0} for RCT-only, or a value in (0, 1].
-#' @param bootstrap Number of bootstrap replicates, or \code{NULL}
+#'   optimal weight, \code{0} for no direct borrowing, or a value in (0, 1].
+#'   At \code{0} the external controls get no weight, but the outcome model
+#'   is still fit on all controls, trial and external (as in Zhou et al.,
+#'   Theorem 2). The estimate stays valid by randomization alone; the
+#'   external data affect only its precision. Unlike \code{\link{ec_ipw}},
+#'   it therefore does not use trial data only.
+#' @param bootstrap Number of bootstrap replicates (at least 2), or \code{NULL}
 #'   (default) for sandwich variance with normal CIs.
-#' @param bootstrap_ci_type Bootstrap CI type. Defaults to \code{"perc"}.
+#'   Use about 1000 or more for reported intervals; small values are for
+#'   quick checks only, and their interval can exclude the point estimate.
+#' @param bootstrap_ci_type Bootstrap CI type, or \code{NULL} (default)
+#'   which resolves to \code{"perc"} when \code{bootstrap} is set. One of
+#'   \code{"perc"}, \code{"bca"}, \code{"norm"}, or \code{"basic"}. Needs
+#'   \code{bootstrap}.
+#'   \code{"bca"} is slow when \code{bootstrap} is smaller than the number
+#'   of patients: \code{boot::boot.ci()} then refits the estimator once for
+#'   each patient.
 #'
 #' @return An S4 object of class \code{ec_aipw_method}.
 #'
 #' @references
-#' Zhou et al. (2024). Causal estimators for incorporating external
+#' Zhou et al. (2025). Causal estimators for incorporating external
 #' controls in randomized trials with longitudinal outcomes.
-#' \emph{JRSS-A}. \doi{10.1093/jrsssa/qnae075}
+#' \emph{JRSS-A}, 188(3), 791-818. \doi{10.1093/jrsssa/qnae075}
 #'
 #' @export
 #'
@@ -54,7 +78,7 @@ NULL
 #'   )
 #' )
 #'
-#' # no borrowing
+#' # no direct borrowing
 #' ec_aipw(
 #'   ps_formula = "S ~ x1 + x2 + x3 + x4 + x5",
 #'   outcome_formula = c(
@@ -82,9 +106,16 @@ ec_aipw <- function(ps_formula,
   checkmate::assert_string(ps_formula)
   checkmate::assert_character(outcome_formula, min.len = 1)
   checkmate::assert_number(weight, lower = 0, upper = 1, null.ok = TRUE)
-  checkmate::assert_count(bootstrap, positive = TRUE, null.ok = TRUE)
+  checkmate::assert_int(bootstrap, lower = 2, null.ok = TRUE)
 
   # bootstrap type
+  if (is.null(bootstrap) && !is.null(bootstrap_ci_type)) {
+    stop("`bootstrap_ci_type` needs `bootstrap`. Set `bootstrap` to the ",
+      "number of replicates, or leave `bootstrap_ci_type` as NULL for ",
+      "sandwich intervals.",
+      call. = FALSE
+    )
+  }
   if (!is.null(bootstrap) && is.null(bootstrap_ci_type)) {
     bootstrap_ci_type <- "perc"
   }
@@ -109,25 +140,26 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
                                                  treatment, trial_status,
                                                  covariates, alpha = 0.05,
                                                  quiet = TRUE) {
-  ps_formula <- sub("^[^~]*~", paste0(trial_status, " ~"), method@ps_formula)
-  if (length(method@outcome_formula) != length(outcomes)) {
-    stop(
-      "outcome_formula must have one formula per outcome (got ",
-      length(method@outcome_formula), " for ", length(outcomes), " outcomes).",
-      call. = FALSE
-    )
-  }
+  .check_alpha(alpha)
+  .check_formula_covariates(method@ps_formula, covariates, outcomes, "ps_formula")
+  .check_formula_covariates(
+    method@outcome_formula, covariates, outcomes, "outcome_formula"
+  )
+  ps_formula <- sub("^[^~]*~", "S ~", method@ps_formula)
+  outcome_formula <- .match_outcome_formulas(
+    method@outcome_formula, outcomes, "outcome_formula"
+  )
   df <- .build_analysis_df(data, outcomes, treatment, trial_status, covariates)
   n_time <- length(outcomes)
 
-  if (!quiet) cat("Running EC-AIPW estimator...\n")
+  if (!quiet) message("Running EC-AIPW estimator...")
 
   # point estimate + sandwich SE
   core <- .ec_aipw_core(
     df, outcomes, ps_formula,
-    method@outcome_formula, method@weight
+    outcome_formula, method@weight
   )
-  sd_tau <- .ec_aipw_se(df, core, n_time, method@outcome_formula)
+  sd_tau <- .ec_aipw_se(df, core, n_time)
 
   # format results
   tau <- core$tau
@@ -143,14 +175,14 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
 
   # bootstrap (optional)
   if (!is.null(method@bootstrap)) {
-    if (!quiet) cat("Running bootstrap inference...\n")
+    if (!quiet) message("Running bootstrap inference...")
     boot_res <- .run_bootstrap(
       df = df, statistic = .ec_aipw_boot_statistic,
       n_estimates = n_time, bootstrap = method@bootstrap,
       bootstrap_ci_type = method@bootstrap_ci_type, alpha = alpha,
       borrow_wt = borrow_weight, outcomes = outcomes,
       ps_formula = ps_formula,
-      outcome_formula = method@outcome_formula
+      outcome_formula = outcome_formula
     )
     results <- data.frame(
       point_estimates = tau,
@@ -176,7 +208,7 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
 #' @return list with tau, borrow_weight, and model intermediates.
 #' @noRd
 .ec_aipw_core <- function(df, outcomes, ps_formula, outcome_formula, weight) {
-  # see Zhou 2024a: Def 2 (Eq 7) for point estimate, Eq 11 for optimal weight
+  # see Zhou 2025: Def 2 (Eq 7) for point estimate, Eq 11 for optimal weight
 
   Y <- as.matrix(df[, outcomes, drop = FALSE])
   S <- df$S
@@ -233,7 +265,7 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
     tau = tau, borrow_weight = borrow_weight,
     ps_model = ps_model, pi_SX = pi_SX, pi_A = pi_A,
     pi_S = pi_S, w00 = w00,
-    Yr = Yr, mu1 = mu1, mu10 = mu10, mu00 = mu00
+    Yr = Yr, mu1 = mu1, mu10 = mu10, mu00 = mu00, Y0_models = Y0_models
   )
 }
 
@@ -242,23 +274,21 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
 #' @param df internal data frame.
 #' @param core output from .ec_aipw_core.
 #' @param n_time number of time points.
-#' @param outcome_formula character vector of outcome model formulas.
 #' @return numeric vector of standard errors (length n_time).
 #' @noRd
-.ec_aipw_se <- function(df, core, n_time, outcome_formula) {
-  # see Zhou 2024a: Theorem 4 (Eq 15 for A/B matrices, Eq 16 for variance)
+.ec_aipw_se <- function(df, core, n_time) {
+  # see Zhou 2025: Theorem 4 (Eq 15 for A/B matrices). the variance of tau is
+  # c' Sigma c by the delta method, which includes the covariances between
+  # mu11, mu10 and mu00. the printed Eq 16 leaves these out; do not follow it.
 
   S <- df$S
   A <- df$A
   N <- nrow(df)
 
+  # drop columns that glm() and lm() aliased (coefficient NA), as the fits do
   X_ps <- model.matrix(core$ps_model)
+  X_ps <- X_ps[, !is.na(coef(core$ps_model)), drop = FALSE]
   n_ps <- ncol(X_ps)
-
-  # refit outcome models on full data (needed for sandwich, not for tau)
-  Y0_models_full <- lapply(outcome_formula, \(f) {
-    lm(as.formula(f), data = df)
-  })
 
   # bread: ps block----
   A33 <- diag(
@@ -267,7 +297,7 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
   )
   A34 <- t((1 - S) * core$w00 / (1 - core$pi_S) *
     sweep(core$Yr, 2, core$mu00)) %*% X_ps / N
-  A44 <- t(X_ps) %*% diag(-core$pi_SX * (1 - core$pi_SX)) %*% X_ps / N
+  A44 <- crossprod(X_ps * (-core$pi_SX * (1 - core$pi_SX)), X_ps) / N
 
   A0 <- as.matrix(Matrix::bdiag(
     diag(-1, n_time), diag(-1, n_time), A33, A44
@@ -278,7 +308,13 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
   ] <- A34
 
   # bread: outcome model blocks----
-  Y0_model_mats <- lapply(Y0_models_full, model.matrix)
+  # design matrices for all patients from the fitted control models, so that
+  # data-dependent terms such as ns() keep the basis of the point estimate
+  Y0_model_mats <- lapply(core$Y0_models, \(m) {
+    tt <- delete.response(terms(m))
+    X <- model.matrix(tt, model.frame(tt, df, xlev = m$xlevels))
+    X[, !is.na(coef(m)), drop = FALSE]
+  })
   n_outcome <- sum(vapply(Y0_model_mats, ncol, integer(1)))
 
   Phi1_gamma <- as.matrix(Matrix::bdiag(lapply(seq_len(n_time), \(t) {
@@ -293,8 +329,9 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
       Y0_model_mats[[t]] / N
   })))
   Y0_gamma <- as.matrix(Matrix::bdiag(lapply(seq_len(n_time), \(t) {
-    -t(Y0_model_mats[[t]]) %*%
-      diag((1 - A) / (1 - mean(A))) %*% Y0_model_mats[[t]] / N
+    -crossprod(
+      Y0_model_mats[[t]] * ((1 - A) / (1 - mean(A))), Y0_model_mats[[t]]
+    ) / N
   })))
 
   # assemble full bread matrix----
@@ -319,7 +356,7 @@ setMethod("estimate", "ec_aipw_method", function(method, data, outcomes,
 
   B <- crossprod(cbind(phi1, phi2, phi3, phi_ps, phi_Y0)) / N
 
-  # sandwich: A^{-1} B A^{-T}, then extract tau variance
+  # sandwich: A^{-1} B A^{-T}, then var(tau) = c' Sigma c with the full Sigma
   A_inv <- solve(A_mat)
   sigma <- A_inv %*% B %*% t(A_inv)
 

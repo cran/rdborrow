@@ -98,14 +98,17 @@ estimate(method, ...)
 
 \item{covariates}{Character vector of covariate column names.}
 
-\item{alpha}{Significance level (default 0.05).}
+\item{alpha}{Significance level, more than 0 and less than 1 (default
+0.05).}
 
 \item{quiet}{Logical. Suppress output (default TRUE).}
 
 \item{T_cross}{Integer crossover time point (OLE methods only).}
 }
 \value{
-A list with estimation results.
+For primary methods, a list with \code{results} and
+  \code{borrow_weight}; for OLE methods, a data frame. See
+  \code{\link{run_analysis}} for the columns and row names.
 }
 \description{
 S4 generic that dispatches to the appropriate estimation logic

@@ -15,20 +15,30 @@ setup_analysis_primary(
 )
 }
 \arguments{
-\item{data}{A data frame containing all subject-level data.}
+\item{data}{A data frame containing all subject-level data.
+It must have trial treated patients and trial controls. It must also
+have external controls, unless the method is \code{ec_ipw(weight = 0)}.}
 
-\item{trial_status_col_name}{Name of the trial status column.}
+\item{trial_status_col_name}{Name of the trial status column: 1 for
+trial patients, 0 for external controls. Must be numeric or logical.}
 
-\item{treatment_col_name}{Name of the treatment column.}
+\item{treatment_col_name}{Name of the treatment column: 1 for treated, 0
+for control. Must be numeric or logical, not a factor. External controls
+must have 0.}
 
-\item{outcome_col_name}{Character vector of outcome column names.}
+\item{outcome_col_name}{Character vector of outcome column names. The
+columns must have no missing values.}
 
-\item{covariates_col_name}{Character vector of covariate column names.}
+\item{covariates_col_name}{Character vector of covariate column names. The
+columns must have no missing values.
+Outcome and covariate columns cannot be named \code{S} or \code{A}, or
+be the trial-status or treatment column.}
 
 \item{method_weighting_obj}{A method object created by
 \code{\link{ec_ipw}} or \code{\link{ec_aipw}}.}
 
-\item{alpha}{Significance level (default 0.05).}
+\item{alpha}{Significance level, more than 0 and less than 1 (default
+0.05).}
 }
 \value{
 An object of class \code{analysis_primary_obj}, to be passed to
