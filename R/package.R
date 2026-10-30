@@ -4,6 +4,7 @@
 #' @import mvtnorm
 #' @import boot
 #' @importFrom CVXR Variable Minimize Problem
+#' @importFrom ECOSolveR ECOS_csolve
 #' @import progress
 #' @importFrom methods is new
 #' @importFrom stats as.formula coef delete.response glm lm model.frame

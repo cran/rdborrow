@@ -125,7 +125,6 @@ test_that("run_analysis dispatches did_ec_or correctly", {
 
 test_that("run_analysis dispatches scm correctly", {
   skip_on_cran()
-  skip_if_not_installed("ECOSolveR")
 
   method <- scm(bootstrap = 2)
   analysis <- setup_analysis_OLE(

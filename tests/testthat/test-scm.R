@@ -1,5 +1,8 @@
+test_that("scm() solver is installed with rdborrow", {
+  expect_contains(names(getNamespaceImports("rdborrow")), "ECOSolveR")
+})
+
 test_that(".scm_subject_sc returns convex weights and their predictions", {
-  skip_if_not_installed("ECOSolveR")
   outs <- paste0("y", 1:4)
   vars <- c(paste0("x", 1:5), outs)
   ext <- SyntheticData[SyntheticData$S == 0, vars][1:15, ]
@@ -23,7 +26,6 @@ test_that(".scm_subject_sc returns convex weights and their predictions", {
 })
 
 test_that(".scm_lambdacv searches a real lambda path", {
-  skip_if_not_installed("ECOSolveR")
   outs <- paste0("y", 1:4)
   vars <- c(paste0("x", 1:5), outs)
   X00 <- unname(t(as.matrix(SyntheticData[SyntheticData$S == 0, vars][1:12, ])))
@@ -39,7 +41,6 @@ test_that(".scm_lambdacv searches a real lambda path", {
 })
 
 test_that("scm() runs end to end on a small data set", {
-  skip_if_not_installed("ECOSolveR")
   d <- rbind(
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 1, ][1:10, ],
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 0, ][1:10, ],
@@ -63,7 +64,6 @@ test_that("scm() runs end to end on a small data set", {
 })
 
 test_that("the scm bootstrap statistic equals the estimate on the original sample", {
-  skip_if_not_installed("ECOSolveR")
   outs <- c("y1", "y2", "y3", "y4")
   covs <- c("x1", "x2", "x3", "x4", "x5")
   d <- rbind(
@@ -87,7 +87,6 @@ test_that("the scm bootstrap statistic equals the estimate on the original sampl
 })
 
 test_that("scm() runs with two external controls and rejects one", {
-  skip_if_not_installed("ECOSolveR")
   fit <- function(n_ext) {
     d <- rbind(
       SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 1, ][1:10, ],
@@ -107,7 +106,6 @@ test_that("scm() runs with two external controls and rejects one", {
 })
 
 test_that("scm() names a covariate that is not numeric", {
-  skip_if_not_installed("ECOSolveR")
   d <- rbind(
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 1, ][1:10, ],
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 0, ][1:10, ],
@@ -136,7 +134,6 @@ test_that("scm() rejects lambda settings it cannot use", {
 })
 
 test_that("scm() reports the selected lambda", {
-  skip_if_not_installed("ECOSolveR")
   d <- rbind(
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 1, ][1:10, ],
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 0, ][1:10, ],
@@ -158,7 +155,6 @@ test_that("scm() reports the selected lambda", {
 })
 
 test_that("scm() with a dominant penalty uses nearest-neighbour synthetic controls", {
-  skip_if_not_installed("ECOSolveR")
   df <- make_ole_data(n_trt = 5, n_ctrl = 8, n_ext = 25, n_time = 4)
   method <- scm(lambda_min = 1e4, lambda_max = 1e4, nlambda = 1, bootstrap = 5)
   set.seed(1)
@@ -183,7 +179,6 @@ test_that("scm() with a dominant penalty uses nearest-neighbour synthetic contro
 
 test_that("scm() confidence intervals honour alpha", {
   skip_on_cran()
-  skip_if_not_installed("ECOSolveR")
   df <- make_ole_data(n_trt = 6, n_ctrl = 6, n_ext = 15, n_time = 4)
   method <- scm(lambda_min = 0.01, lambda_max = 0.01, nlambda = 1, bootstrap = 40)
   set.seed(3)
@@ -195,7 +190,6 @@ test_that("scm() confidence intervals honour alpha", {
 })
 
 test_that(".scm_lambdacv picks the lambda with the smallest held-out error", {
-  skip_if_not_installed("ECOSolveR")
   vars <- c(paste0("x", 1:5), paste0("y", 1:4))
   X00 <- unname(t(as.matrix(SyntheticData[SyntheticData$S == 0, vars][1:12, ])))
   rownames(X00) <- vars
@@ -216,7 +210,6 @@ test_that(".scm_lambdacv picks the lambda with the smallest held-out error", {
 })
 
 test_that("scm() stops with a clear error when the solver fails", {
-  skip_if_not_installed("ECOSolveR")
   d <- rbind(
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 1, ][1:10, ],
     SyntheticData[SyntheticData$S == 1 & SyntheticData$A == 0, ][1:10, ],

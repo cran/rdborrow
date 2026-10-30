@@ -34,6 +34,7 @@ importFrom(CVXR,
   Problem,
   Variable
 )
+importFrom(ECOSolveR,ECOS_csolve)
 importFrom(Matrix,bdiag)
 importFrom(copula,
   mvdc,

@@ -1,3 +1,8 @@
+# rdborrow 0.0.5.1
+
+## Bug fixes
+- `scm()` now works after `install.packages("rdborrow")`. Its solver package, ECOSolveR, was only suggested, so a default install did not include it and `scm()` stopped with an error until ECOSolveR was installed by hand. ECOSolveR is now a required dependency.
+
 # rdborrow 0.0.5.0
 
 ## Breaking changes

@@ -118,13 +118,6 @@ setMethod("estimate", "scm_method", function(method, data, outcomes,
                                              covariates, alpha = 0.05,
                                              quiet = TRUE,
                                              T_cross) {
-  if (!requireNamespace("ECOSolveR", quietly = TRUE)) {
-    stop(
-      "The 'ECOSolveR' package is required to fit the synthetic control ",
-      "method (scm()). Install it with install.packages('ECOSolveR').",
-      call. = FALSE
-    )
-  }
   .check_alpha(alpha)
   T_cross <- .check_T_cross(T_cross, outcomes)
   df <- .build_analysis_df(data, outcomes, treatment, trial_status, covariates)
